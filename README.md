@@ -40,12 +40,12 @@ Make sure to **configure** your installation afterwards (see next section).
 
 Some methods need credentials:
 
-| Service                         | Environment variable |
-| ------------------------------- | -------------------- |
-| Elsevier API                    | `ELSEVIER_API_KEY`   |
-| Springer Open Access API        | `SPRINGER_API_KEY`   |
-| Wiley TDM API                   | `WILEY_API_KEY`      |
-| Unpaywall (valid email address) | `UNPAYWALL_EMAIL`    |
+| Service | Environment variable | Where to get the key |
+| --- | --- | --- |
+| [Elsevier API](https://dev.elsevier.com) | `ELSEVIER_API_KEY` | https://dev.elsevier.com |
+| [Springer Open Access API](https://dev.springernature.com) | `SPRINGER_API_KEY` | https://dev.springernature.com |
+| [Wiley TDM API](https://onlinelibrary.wiley.com/library-info/resources/text-and-datamining) | `WILEY_API_KEY` | https://onlinelibrary.wiley.com/library-info/resources/text-and-datamining |
+| Unpaywall (any valid email address) | `UNPAYWALL_EMAIL` | (enter your email address) |
 
 Set these environment variables **or** run the interactive helper:
 
