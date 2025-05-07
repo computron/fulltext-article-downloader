@@ -18,11 +18,25 @@
 
 ## Installation
 
-```bash
-pip install fulltext-article-downloader
+### Option 1 - quick install from github
+
+```
+pip install git+https://github.com/computron/fulltext-article-downloader.git
 ```
 
-### Configuration (API keys & email)
+Make sure to **configure** your installation afterwards (see next section).
+
+### Option 2 - editable clone (recommended for development)
+
+```
+git clone https://github.com/computron/fulltext-article-downloader.git
+cd fulltext-article-downloader
+pip install -e .
+```
+
+Make sure to **configure** your installation afterwards (see next section).
+
+## Configuration (API keys & email)
 
 Some methods need credentials:
 
