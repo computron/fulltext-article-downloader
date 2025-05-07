@@ -161,18 +161,18 @@ See next section (Methods and fallback logic) for details on tools implemented.
 The tool is composed of multiple sub-tools intended to support various publishers. The tool order depends on the publisher.
 
 
-| Publisher / source | Default tool order                                            |
-| ------------------ | ------------------------------------------------------------- |
-| Elsevier           | `unpaywall` → `elsevier`                                      |
-| Springer / Nature  | `crossref_tdm` → `springerpdf` → `unpaywall` → `springeropen` |
-| Wiley              | `wiley` → `unpaywall`                                         |
-| PLOS               | `plos`                                                        |
-| Preprint servers   | `paperscraper`                                                |
-| arXiv              | `paperscraper` → `arxiv`
-| eLife              | `elife`                                                       |
-| Cambridge          | `cambridge`                                                   |
-| APS                | `aps`                                                         |
-| Others             | `unpaywall`                                                   |
+| Publisher / source | Default tool order                                                  |
+| ------------------ | --------------------------------------------------------------------|
+| Elsevier           | `unpaywall` → `elsevier` (XML)                                      |
+| Springer / Nature  | `crossref_tdm` → `springerpdf` → `unpaywall` → `springeropen` (XML) |
+| Wiley              | `wiley` → `unpaywall`                                               |
+| PLOS               | `plos`                                                              |
+| Preprint servers   | `paperscraper`                                                      |
+| arXiv              | `paperscraper` → `arxiv`                                            |
+| eLife              | `elife`                                                             |
+| Cambridge          | `cambridge`                                                         |
+| APS                | `aps`                                                               |
+| Others             | `unpaywall`                                                         |
 
 See the ``PUBLISHER_TOOL_MAP`` in ``downloader.py``.
 
