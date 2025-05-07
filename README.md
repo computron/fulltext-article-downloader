@@ -16,7 +16,7 @@
 
 ---
 
-## Installation
+## 1. Installation
 
 ### Option 1 - quick install from github
 
@@ -36,7 +36,7 @@ pip install -e .
 
 Make sure to **configure** your installation afterwards (see next section).
 
-## Configuration (API keys & email)
+## 2. Configuration (API keys & email)
 
 Some methods need credentials:
 
@@ -57,7 +57,7 @@ The script stores keys in `~/.fulltext_keys`, which are loaded automatically on 
 
 ---
 
-## Usage
+## 3. Usage
 
 ### 1. Command‑line interface (CLI)
 
@@ -134,7 +134,9 @@ results = bulk_download_articles(
 
 ---
 
-## Failures
+## 4. Failures and tools
+
+### Failure examples
 
 Many articles are not open-access, and publishers explicitly restrict or discourage text and data mining. The following are examples of failures:
 
@@ -156,7 +158,7 @@ If you see an error like ``Failed to load APS cookies``, please make sure you ar
 
 See next section (Methods and fallback logic) for details on tools implemented.
 
-## Methods and fallback logic
+### Methods and fallback logic
 
 The tool is composed of multiple sub-tools intended to support various publishers. The tool order depends on the publisher.
 
@@ -199,7 +201,7 @@ PUBLISHER_TOOL_MAP["Elsevier BV"] = ["elsevier", "unpaywall"]
 
 ---
 
-## License and Disclaimer.
+## 4. License and Disclaimer.
 
 BSD 3‑Clause. See the `LICENSE` file.
 
