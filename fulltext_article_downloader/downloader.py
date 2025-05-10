@@ -8,8 +8,7 @@ logging.basicConfig(stream=sys.stdout, level=logging.WARNING)
 # Mapping of publisher names to preferred tool order
 PUBLISHER_TOOL_MAP = {
     "Elsevier BV": ["unpaywall", "elsevier"],
-    "Springer Science and Business Media LLC": ["crossref_tdm", "springerpdf",
-                                                "unpaywall", "springeropen"],
+    "Springer Science and Business Media LLC": ["springerpdf", "unpaywall", "springeropen"],
     "Wiley": ["wiley", "unpaywall"],
     "American Chemical Society (ACS)": ["unpaywall"],
     "Royal Society of Chemistry (RSC)": ["unpaywall"],
@@ -19,10 +18,10 @@ PUBLISHER_TOOL_MAP = {
     "Cambridge University Press (CUP)": ["cambridge", "unpaywall"],
     "Taylor & Francis": ["unpaywall"],
     "Public Library of Science (PLoS)": ["plos", "unpaywall"],
-    "bioRxiv": ["paperscraper"],
-    "medRxiv": ["paperscraper"],
-    "chemRxiv": ["paperscraper"],
-    "arXiv": ["paperscraper", "arxiv"],
+    "bioRxiv": ["paperscraper", "unpaywall"],
+    "medRxiv": ["paperscraper", "unpaywall"],
+    "chemRxiv": ["paperscraper", "unpaywall"],
+    "arXiv": ["paperscraper", "arxiv", "unpaywall"],
     "eLife Sciences Publications, Ltd": ["elife", "unpaywall"],
     "Institute of Electrical and Electronics Engineers (IEEE)": ["unpaywall"]
 }
@@ -140,9 +139,9 @@ def download_article(doi: str, output_dir: str, output_filename: str = None,
     if tools is None:
         publisher = get_publisher_from_doi(doi)
         if publisher:
-            method_list = PUBLISHER_TOOL_MAP.get(publisher, ["unpaywall"])
+            method_list = PUBLISHER_TOOL_MAP.get(publisher, ["unpaywall", "crossref_tdm"])
         else:
-            method_list = ["unpaywall"]
+            method_list = ["unpaywall", "crossref_tdm"]
     else:
         method_list = tools
     # Sanitize DOI for use in file name (replace disallowed characters with '_')
