@@ -2,6 +2,8 @@
 
 **fulltext-article-downloader** is a Python package for **programmatically downloading the full text of research articles from their DOIs**. It chains together publisher APIs, open‑access aggregators, and polite web scraping in a fallback sequence so you can collect large corpora of PDFs or XML for text mining and analysis.
 
+**Video tutorial**: https://youtu.be/fTtc4QWMYzE
+
 ---
 
 ## Features
