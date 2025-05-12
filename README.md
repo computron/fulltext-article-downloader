@@ -168,14 +168,14 @@ The tool is composed of multiple sub-tools intended to support various publisher
 | Publisher / source | Default tool order                                                  |
 | ------------------ | --------------------------------------------------------------------|
 | Elsevier           | `unpaywall` → `elsevier` (XML)                                      |
-| Springer / Nature  | `crossref_tdm` → `springerpdf` → `unpaywall` → `springeropen` (XML) |
+| Springer / Nature  | `springerpdf` → `unpaywall` → `springeropen` (XML) → `crossref_tdm` |
 | Wiley              | `wiley` → `unpaywall`                                               |
-| PLOS               | `plos`                                                              |
-| Preprint servers   | `paperscraper`                                                      |
-| arXiv              | `paperscraper` → `arxiv`                                            |
-| eLife              | `elife`                                                             |
-| Cambridge          | `cambridge`                                                         |
-| APS                | `aps`                                                               |
+| PLOS               | `plos` → `unpaywall`                                                |
+| Preprint servers   | `paperscraper` → `unpaywall`                                        |
+| arXiv              | `paperscraper` → `arxiv` → `unpaywall`                              |
+| eLife              | `elife` → `unpaywall`                                               |
+| Cambridge          | `cambridge` → `unpaywall`                                           |
+| APS                | `aps` → `unpaywall`                                                 |
 | Others             | `unpaywall`                                                         |
 
 See the ``PUBLISHER_TOOL_MAP`` in ``downloader.py``.
