@@ -1,4 +1,5 @@
 import os
+import re
 import requests
 import browser_cookie3
 from bs4 import BeautifulSoup
@@ -113,6 +114,10 @@ def download_via_plos(doi: str, output_path: str):
 def download_via_unpaywall(doi: str, output_path: str):
     """
     Download an open-access PDF via Unpaywall.
+    Tries every OA location (best first), not only best_oa_location: publisher
+    PDF links are often bot-blocked (403) while a PMC or repository copy of the
+    same paper downloads fine. PMC-hosted copies usually carry no url_for_pdf,
+    so those are fetched through Europe PMC's PDF render endpoint.
     Requires an email configured for Unpaywall (UNPAYWALL_EMAIL).
     """
     email = os.getenv("UNPAYWALL_EMAIL")
@@ -128,13 +133,43 @@ def download_via_unpaywall(doi: str, output_path: str):
         raise Exception(
             f"Unpaywall API request failed (status code {r.status_code})")
     data = r.json()
-    pdf_url = None
+    locations = []
     if data.get("best_oa_location"):
-        pdf_url = data["best_oa_location"].get("url_for_pdf")
-    if not pdf_url:
+        locations.append(data["best_oa_location"])
+    for loc in data.get("oa_locations") or []:
+        if loc not in locations:
+            locations.append(loc)
+    candidates = []
+    for loc in locations:
+        pdf_url = loc.get("url_for_pdf")
+        if pdf_url and pdf_url not in candidates:
+            candidates.append(pdf_url)
+        m = re.search(
+            r"(?:ncbi\.nlm\.nih\.gov/pmc/articles/|europepmc\.org/articles/)(?:PMC)?(\d+)",
+            loc.get("url") or "")
+        if m:
+            epmc_url = f"https://europepmc.org/articles/PMC{m.group(1)}?pdf=render"
+            if epmc_url not in candidates:
+                candidates.append(epmc_url)
+    if not candidates:
         raise Exception(f"No open-access PDF found for DOI: {doi}")
-    # Download the PDF from the obtained URL
-    return _download_file(pdf_url, output_path)
+    errors = []
+    for pdf_url in candidates:
+        try:
+            _download_file(pdf_url, output_path)
+        except Exception as e:
+            errors.append(str(e))
+            continue
+        # A blocked location can return an HTML page with status 200; only
+        # accept the file if it is actually a PDF.
+        with open(output_path, "rb") as fh:
+            magic = fh.read(5)
+        if magic == b"%PDF-":
+            return output_path
+        os.remove(output_path)
+        errors.append(f"{pdf_url} returned non-PDF content")
+    raise Exception(
+        f"All OA locations failed for DOI {doi}: " + "; ".join(errors))
 
 
 def download_via_springeropen(doi: str, output_path: str):
