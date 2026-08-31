@@ -5,10 +5,16 @@ import browser_cookie3
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
 
-def _download_file(url: str, output_path: str, headers=None, session=None):
+def _download_file(url: str, output_path: str, headers=None, session=None,
+                   expect_pdf=False):
     """
     Helper to download a file from a URL to the given output path using streaming.
     Raises an Exception if the HTTP status is not 200.
+    With expect_pdf=True, also verify the downloaded file starts with the
+    %PDF- magic bytes; publishers frequently serve an HTML error or landing
+    page with status 200, which would otherwise be saved as a fake .pdf.
+    On mismatch the file is removed and an Exception raised. Leave it False
+    for routes that can legitimately return non-PDF full text (e.g. XML).
     """
     req = session.get if session else requests.get
     # Provide default headers if none given? (We won't set a default UA here, let caller provide if needed)
@@ -26,6 +32,13 @@ def _download_file(url: str, output_path: str, headers=None, session=None):
                     f.write(chunk)
     except Exception as e:
         raise Exception(f"Error writing to file {output_path}: {e}")
+    if expect_pdf:
+        with open(output_path, "rb") as fh:
+            magic = fh.read(5)
+        if magic != b"%PDF-":
+            os.remove(output_path)
+            raise Exception(
+                f"{url} returned non-PDF content (expected a PDF)")
     return output_path
 
 
@@ -74,7 +87,8 @@ def download_via_springerpdf(doi: str, output_path: str):
         "User-Agent": "Mozilla/5.0",
         "Referer": f"https://link.springer.com/article/{doi}"
     }
-    return _download_file(pdf_url, output_path, headers=headers)
+    return _download_file(pdf_url, output_path, headers=headers,
+                          expect_pdf=True)
 
 
 def download_via_wiley(doi: str, output_path: str):
@@ -106,7 +120,8 @@ def download_via_plos(doi: str, output_path: str):
     try:
         # Using requests directly since _download_file doesn't accept params, build URL manually
         pdf_url = f"{base_url}?id={doi}&type=printable"
-        return _download_file(pdf_url, output_path, headers=None)
+        return _download_file(pdf_url, output_path, headers=None,
+                              expect_pdf=True)
     except Exception as e:
         raise Exception(f"PLOS download failed: {e}")
 
@@ -156,18 +171,11 @@ def download_via_unpaywall(doi: str, output_path: str):
     errors = []
     for pdf_url in candidates:
         try:
-            _download_file(pdf_url, output_path)
+            # expect_pdf guards against blocked locations returning an HTML
+            # page with status 200; on mismatch we move to the next location.
+            return _download_file(pdf_url, output_path, expect_pdf=True)
         except Exception as e:
             errors.append(str(e))
-            continue
-        # A blocked location can return an HTML page with status 200; only
-        # accept the file if it is actually a PDF.
-        with open(output_path, "rb") as fh:
-            magic = fh.read(5)
-        if magic == b"%PDF-":
-            return output_path
-        os.remove(output_path)
-        errors.append(f"{pdf_url} returned non-PDF content")
     raise Exception(
         f"All OA locations failed for DOI {doi}: " + "; ".join(errors))
 
@@ -232,8 +240,10 @@ def download_via_crossref_tdm(doi: str, output_path: str):
             break
     if not pdf_link:
         raise Exception(f"No PDF link found via CrossRef for DOI {doi}")
-    # Download the PDF from the found link
-    return _download_file(pdf_link, output_path)
+    # Download the PDF from the found link. The declared content-type is
+    # application/pdf, but some publishers serve an HTML citation stub at
+    # these URLs, so verify the content.
+    return _download_file(pdf_link, output_path, expect_pdf=True)
 
 
 def download_via_arxiv(doi: str, output_path: str):
@@ -247,7 +257,7 @@ def download_via_arxiv(doi: str, output_path: str):
     if arxiv_id.lower().startswith("arxiv:"):
         arxiv_id = arxiv_id[len("arXiv:"):]
     pdf_url = f"https://arxiv.org/pdf/{arxiv_id}.pdf"
-    return _download_file(pdf_url, output_path)
+    return _download_file(pdf_url, output_path, expect_pdf=True)
 
 
 def download_via_elife(doi: str, output_path: str):
@@ -281,7 +291,8 @@ def download_via_elife(doi: str, output_path: str):
         pdf_link = "https://elifesciences.org" + pdf_link
     # Use the same headers and add referer
     headers["Referer"] = response.url
-    return _download_file(pdf_link, output_path, headers=headers)
+    return _download_file(pdf_link, output_path, headers=headers,
+                          expect_pdf=True)
 
 
 def download_via_paperscraper(doi: str, output_path: str):
@@ -330,7 +341,7 @@ def download_via_aps(doi: str, output_path: str):
     target_url = pdf_url if pdf_url else f"https://doi.org/{doi}"
     headers = {"Accept": "application/pdf"}
     return _download_file(target_url, output_path, headers=headers,
-                          session=session)
+                          session=session, expect_pdf=True)
 
 
 def download_via_cambridge(doi: str, output_path: str):
@@ -371,4 +382,4 @@ def download_via_cambridge(doi: str, output_path: str):
         pdf_url = f"{parsed_url.scheme}://{parsed_url.netloc}{pdf_link}"
     else:
         pdf_url = pdf_link
-    return _download_file(pdf_url, output_path)
+    return _download_file(pdf_url, output_path, expect_pdf=True)
