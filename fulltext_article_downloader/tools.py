@@ -67,9 +67,13 @@ def download_via_elsevier(doi: str, output_path: str):
             f.write(response.content)
         return output_path
     elif response.status_code == 403:
-        # Access denied (likely API key or no institutional access)
-        raise Exception(
-            "Access denied by Elsevier API. Verify API key and access rights.")
+        # Access denied. Elsevier's X-ELS-Status header says why:
+        # APIKEY_INVALID = bad key; AUTHORIZATION_ERROR = no subscription/IP
+        # entitlement; AUTHENTICATION_ERROR = key not provisioned for the
+        # Article Retrieval API (fix at dev.elsevier.com, not in the key file).
+        detail = response.headers.get("X-ELS-Status", "").strip() \
+            or response.text[:200]
+        raise Exception(f"Access denied by Elsevier API ({detail}).")
     elif response.status_code == 404:
         raise Exception("DOI not found in Elsevier API.")
     else:
