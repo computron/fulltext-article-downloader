@@ -8,8 +8,10 @@ import fulltext_article_downloader.tools as tools
 
 
 class DummyResponse:
-    def __init__(self, status_code=200, content=None, json_data=None, url=None):
+    def __init__(self, status_code=200, content=None, json_data=None, url=None,
+                 headers=None):
         self.status_code = status_code
+        self.headers = headers or {}
         if isinstance(content, str):
             # store both text and content
             self._text = content
@@ -83,6 +85,73 @@ def test_elsevier_api_success(tmp_path, monkeypatch):
     assert data == sample_xml
 
 
+def test_elsevier_prefers_entitled_pdf(tmp_path, monkeypatch):
+    # With PDF entitlement, the PDF wins over the XML and lands as .pdf.
+    pdf_bytes = b"%PDF-1.4 full article"
+    seen = []
+
+    def dummy_get(url, headers=None, params=None, **kwargs):
+        accept = headers.get("Accept")
+        seen.append(accept)
+        if accept == "application/pdf":
+            return DummyResponse(status_code=200, content=pdf_bytes,
+                                 headers={"X-ELS-Status": "OK"})
+        return DummyResponse(status_code=200, content=b"<full-text/>")
+
+    monkeypatch.setattr(tools.requests, "get", dummy_get)
+    os.environ["ELSEVIER_API_KEY"] = "TESTKEY"
+    # Caller asks for .xml; the actual format decides the extension.
+    result_path = tools.download_via_elsevier(
+        "10.1234/testdoi", str(tmp_path / "article.xml"))
+    assert result_path == str(tmp_path / "article.pdf")
+    with open(result_path, "rb") as f:
+        assert f.read() == pdf_bytes
+    # The XML route is never consulted once an entitled PDF is in hand.
+    assert seen == ["application/pdf"]
+
+
+def test_elsevier_falls_back_when_pdf_not_entitled(tmp_path, monkeypatch):
+    # Elsevier returns 200 and a valid but first-page-only PDF when the
+    # requestor lacks PDF entitlement; the complete XML must win instead.
+    preview = b"%PDF-1.4 first page only"
+    xml_bytes = b"<full-text>complete</full-text>"
+    warning = ("WARNING - Response limited to first page because requestor "
+               "not entitled to resource")
+
+    def dummy_get(url, headers=None, params=None, **kwargs):
+        if headers.get("Accept") == "application/pdf":
+            return DummyResponse(status_code=200, content=preview,
+                                 headers={"X-ELS-Status": warning})
+        return DummyResponse(status_code=200, content=xml_bytes,
+                             headers={"X-ELS-Status": "OK"})
+
+    monkeypatch.setattr(tools.requests, "get", dummy_get)
+    os.environ["ELSEVIER_API_KEY"] = "TESTKEY"
+    result_path = tools.download_via_elsevier(
+        "10.1234/testdoi", str(tmp_path / "article.pdf"))
+    # Caller asked for .pdf, but XML is what was written, so .xml it is.
+    assert result_path == str(tmp_path / "article.xml")
+    with open(result_path, "rb") as f:
+        assert f.read() == xml_bytes
+    # The truncated preview is not left behind on disk.
+    assert not os.path.exists(str(tmp_path / "article.pdf"))
+
+
+def test_elsevier_falls_back_when_pdf_route_returns_non_pdf(tmp_path, monkeypatch):
+    # A 200 that is not actually a PDF (HTML stub) must not be saved as one.
+    def dummy_get(url, headers=None, params=None, **kwargs):
+        if headers.get("Accept") == "application/pdf":
+            return DummyResponse(status_code=200,
+                                 content=b"<html>landing page</html>",
+                                 headers={"X-ELS-Status": "OK"})
+        return DummyResponse(status_code=200, content=b"<full-text/>")
+
+    monkeypatch.setattr(tools.requests, "get", dummy_get)
+    os.environ["ELSEVIER_API_KEY"] = "TESTKEY"
+    result_path = tools.download_via_elsevier(
+        "10.1234/testdoi", str(tmp_path / "a.pdf"))
+    assert result_path == str(tmp_path / "a.xml")
+
 def test_elsevier_api_errors(monkeypatch):
     # 403 Forbidden error
     def dummy_get_403(url, headers=None, params=None, **kwargs):
@@ -110,7 +179,7 @@ def test_elsevier_api_errors(monkeypatch):
 
 def test_springerpdf_download(monkeypatch, tmp_path):
     # Simulate direct PDF link retrieval for Springer
-    dummy_pdf_content = b"PDFDATA"
+    dummy_pdf_content = b"%PDF-1.4 PDFDATA"
 
     def dummy_get(url, headers=None, **kwargs):
         # Should be called with direct content/pdf URL
@@ -157,7 +226,7 @@ def test_wiley_download_failure(monkeypatch):
 
 
 def test_plos_download(monkeypatch, tmp_path):
-    dummy_pdf = b"PLOS_PDF"
+    dummy_pdf = b"%PDF-1.4 PLOS_PDF"
 
     def dummy_get(url, headers=None, **kwargs):
         # The URL should contain PLOS base
@@ -192,7 +261,7 @@ def test_unpaywall_no_pdf(monkeypatch):
 
 
 def test_unpaywall_success(monkeypatch, tmp_path):
-    dummy_pdf = b"OAPDF"
+    dummy_pdf = b"%PDF-1.4 OAPDF"
 
     def dummy_get(url, headers=None, **kwargs):
         if "api.unpaywall.org" in url:
@@ -238,7 +307,7 @@ def test_crossref_tdm_no_pdf(monkeypatch):
 
 
 def test_crossref_tdm_success(monkeypatch, tmp_path):
-    dummy_pdf = b"PDFDATA_CROSSREF"
+    dummy_pdf = b"%PDF-1.4 PDFDATA_CROSSREF"
 
     def dummy_get(url, **kwargs):
         if "api.crossref.org" in url:
@@ -259,7 +328,7 @@ def test_crossref_tdm_success(monkeypatch, tmp_path):
 
 
 def test_arxiv_download(monkeypatch, tmp_path):
-    dummy_pdf = b"ARXIVPDF"
+    dummy_pdf = b"%PDF-1.4 ARXIVPDF"
 
     def dummy_get(url, **kwargs):
         assert "arxiv.org/pdf" in url
@@ -277,7 +346,7 @@ def test_arxiv_download(monkeypatch, tmp_path):
 
 def test_elife_download(monkeypatch, tmp_path):
     html_with_pdf = '<html><body><a href="/articles/12345/download-pdf">PDF</a></body></html>'
-    dummy_pdf_content = b"ELIFEPDF"
+    dummy_pdf_content = b"%PDF-1.4 ELIFEPDF"
 
     def dummy_get(url, headers=None, **kwargs):
         if url.startswith("https://doi.org/"):
@@ -318,7 +387,7 @@ def test_paperscraper_not_installed(monkeypatch):
 
 
 def test_aps_download(monkeypatch, tmp_path):
-    dummy_pdf = b"APSPDF"
+    dummy_pdf = b"%PDF-1.4 APSPDF"
     # Monkeypatch browser_cookie3.load to return some dummy cookies without error
     monkeypatch.setattr(tools.browser_cookie3, "load",
                         lambda domain_name=None: {})
@@ -353,7 +422,7 @@ def test_aps_download(monkeypatch, tmp_path):
 
 
 def test_cambridge_download(monkeypatch, tmp_path):
-    dummy_pdf = b"CAMBPDF"
+    dummy_pdf = b"%PDF-1.4 CAMBPDF"
     article_url = "https://www.cambridge.org/core/journals/test-journal/article/12345"
     # HTML with a relative PDF link
     html = '<html><a href="/core/services/aop-cambridge-core/content/view/12345.pdf">PDF</a></html>'
