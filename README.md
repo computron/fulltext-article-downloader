@@ -167,11 +167,13 @@ The tool is composed of multiple sub-tools intended to support various publisher
 
 | Publisher / source | Default tool order                                                  |
 | ------------------ | --------------------------------------------------------------------|
-| Elsevier           | `unpaywall` → `elsevier` (XML)                                      |
+| Elsevier           | `unpaywall` → `elsevier` (PDF when entitled, else XML)              |
 | Springer / Nature  | `springerpdf` → `unpaywall` → `springeropen` (XML) → `crossref_tdm` |
 | Wiley              | `wiley` → `unpaywall`                                               |
 | PLOS               | `plos` → `unpaywall`                                                |
 | Preprint servers   | `paperscraper` → `unpaywall`                                        |
+
+The `elsevier` tool asks for the PDF first and keeps it only when the API key is entitled to the full PDF; Elsevier otherwise answers with HTTP 200 and a PDF containing only the article's first page, so the tool discards that and saves the complete full-text XML instead. The returned path always carries the extension of the format actually written (`.pdf` or `.xml`), whatever filename was requested.
 | arXiv              | `paperscraper` → `arxiv` → `unpaywall`                              |
 | eLife              | `elife` → `unpaywall`                                               |
 | Cambridge          | `cambridge` → `unpaywall`                                           |

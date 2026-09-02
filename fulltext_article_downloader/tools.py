@@ -42,30 +42,61 @@ def _download_file(url: str, output_path: str, headers=None, session=None,
     return output_path
 
 
+# Elsevier reports entitlement on the PDF route through the X-ELS-Status
+# header. A requestor without PDF entitlement still gets HTTP 200 and a
+# structurally valid PDF, but one carrying only the article's first page:
+#   "WARNING - Response limited to first page because requestor not entitled
+#    to resource"
+# Text-mining agreements commonly cover the full-text XML where they do not
+# cover the PDF, so such a PDF is strictly worse than the XML and is discarded
+# rather than saved as if it were the article.
+_ELS_NOT_ENTITLED = "not entitled"
+
+
 def download_via_elsevier(doi: str, output_path: str):
     """
-    Download the full-text XML of an Elsevier article via the Elsevier API.
+    Download the full text of an Elsevier article via the Elsevier API.
     Requires an Elsevier API key.
+
+    Prefers the PDF when the key is entitled to it, since the XML carries no
+    figures or page layout, and otherwise falls back to the full-text XML.
+    The returned path always carries the extension of the format actually
+    written, so a caller never receives XML under a ".pdf" name.
     """
     api_key = os.getenv("ELSEVIER_API_KEY")
     if not api_key:
         raise Exception(
             "ELSEVIER_API_KEY is not set. Please configure your Elsevier API key.")
     url = f"https://api.elsevier.com/content/article/doi/{doi}"
-    headers = {
-        "X-ELS-APIKey": api_key,
-        "Accept": "text/xml"
-    }
+    base_path = os.path.splitext(output_path)[0]
     params = {"view": "FULL"}
-    try:
-        response = requests.get(url, headers=headers, params=params)
-    except Exception as e:
-        raise Exception(f"Error connecting to Elsevier API: {e}")
+
+    def _request(accept):
+        try:
+            return requests.get(
+                url, headers={"X-ELS-APIKey": api_key, "Accept": accept},
+                params=params)
+        except Exception as e:
+            raise Exception(f"Error connecting to Elsevier API: {e}")
+
+    # Prefer a fully entitled PDF.
+    pdf_response = _request("application/pdf")
+    if pdf_response.status_code == 200:
+        els_status = pdf_response.headers.get("X-ELS-Status", "") or ""
+        if (_ELS_NOT_ENTITLED not in els_status.lower()
+                and pdf_response.content[:5] == b"%PDF-"):
+            pdf_path = base_path + ".pdf"
+            with open(pdf_path, "wb") as f:
+                f.write(pdf_response.content)
+            return pdf_path
+
+    # Otherwise take the full-text XML.
+    response = _request("text/xml")
     if response.status_code == 200:
-        # Save XML content
-        with open(output_path, 'wb') as f:
+        xml_path = base_path + ".xml"
+        with open(xml_path, "wb") as f:
             f.write(response.content)
-        return output_path
+        return xml_path
     elif response.status_code == 403:
         # Access denied. Elsevier's X-ELS-Status header says why:
         # APIKEY_INVALID = bad key; AUTHORIZATION_ERROR = no subscription/IP
