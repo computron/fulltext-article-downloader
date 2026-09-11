@@ -197,7 +197,7 @@ def test_springerpdf_download(monkeypatch, tmp_path):
 
 
 def test_wiley_download_success(monkeypatch, tmp_path):
-    dummy_pdf = b"WILEYPDF"
+    dummy_pdf = b"%PDF-1.4 WILEYPDF"
 
     def dummy_get(url, headers=None, **kwargs):
         assert "api.wiley.com" in url
@@ -646,6 +646,56 @@ def test_unpaywall_recognises_new_pmc_domain(monkeypatch, tmp_path):
     out = tmp_path / "epmc.pdf"
     assert tools.download_via_unpaywall("10.1039/d3sc01171b", str(out)) == str(out)
     assert out.read_bytes() == dummy_pdf
+
+
+def test_wiley_rate_limit_allows_bursts_and_waits_when_window_full(monkeypatch):
+    slept = []
+    monkeypatch.setattr(tools.time, "sleep", lambda s: slept.append(s))
+    monkeypatch.setattr(tools, "_wiley_calls", [])
+    for _ in range(5):
+        tools._wiley_rate_limit()
+    assert all(s <= tools.WILEY_MIN_GAP_SECONDS for s in slept)
+    monkeypatch.setattr(tools, "_wiley_calls",
+                        [tools.time.time() - 1] * tools.WILEY_MAX_PER_WINDOW)
+    tools._wiley_rate_limit()
+    assert slept[-1] > 500
+
+
+def test_wiley_rejects_non_pdf_body(monkeypatch, tmp_path):
+    monkeypatch.setenv("WILEY_API_KEY", "k")
+    monkeypatch.setattr(tools, "_wiley_rate_limit", lambda: None)
+    monkeypatch.setattr(tools.requests, "get",
+                        lambda url, **kw: DummyResponse(status_code=200, content=b"<html>quota</html>"))
+    try:
+        tools.download_via_wiley("10.1002/x", str(tmp_path / "w.pdf"))
+        assert False, "expected an exception"
+    except Exception as e:
+        assert "non-PDF" in str(e)
+
+
+def test_bulk_download_concurrent_keeps_order_and_errors(monkeypatch, tmp_path):
+    import threading
+    from fulltext_article_downloader import downloader
+    active, peak, lock = [0], [0], threading.Lock()
+
+    def fake_download(doi, output_dir, output_filename=None, tools=None, log_file=None):
+        import time
+        with lock:
+            active[0] += 1; peak[0] = max(peak[0], active[0])
+        time.sleep(0.05)
+        with lock:
+            active[0] -= 1
+        if doi.endswith("bad"):
+            raise Exception("no route")
+        return f"{output_dir}/{doi.replace('/', '_')}.pdf"
+
+    monkeypatch.setattr(downloader, "download_article", fake_download)
+    dois = ["10.1/a", "10.1/bad", "10.1/c", "10.1/d"]
+    results = downloader.bulk_download_articles(dois, str(tmp_path), workers=4)
+    assert list(results) == dois
+    assert results["10.1/bad"].startswith("ERROR: no route")
+    assert results["10.1/c"].endswith("10.1_c.pdf")
+    assert peak[0] > 1  # downloads actually overlapped
 
 
 if __name__ == "__main__":

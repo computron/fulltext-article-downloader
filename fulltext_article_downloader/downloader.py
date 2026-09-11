@@ -2,8 +2,10 @@ import os
 import logging
 import requests
 import sys
+import threading
 
 logging.basicConfig(stream=sys.stdout, level=logging.WARNING)
+_log_setup_lock = threading.Lock()
 
 # Mapping of publisher names to preferred tool order
 PUBLISHER_TOOL_MAP = {
@@ -116,24 +118,25 @@ def download_article(doi: str, output_dir: str, output_filename: str = None,
     # Configure logging if log_file is provided
     logger = logging.getLogger(__name__)
     if log_file:
-        # Avoid adding multiple handlers for the same log file
-        file_path = os.path.abspath(log_file)
-        add_handler = True
-        for h in logger.handlers:
-            if isinstance(h, logging.FileHandler):
-                # If a file handler for the same file already exists, don't add another
-                if hasattr(h, 'baseFilename') and os.path.abspath(
-                        getattr(h, 'baseFilename', '')) == file_path:
-                    add_handler = False
-                    break
-        if add_handler:
-            file_handler = logging.FileHandler(file_path, mode='a')
-            file_handler.setLevel(logging.INFO)
-            formatter = logging.Formatter(
-                '%(asctime)s - %(levelname)s - %(message)s')
-            file_handler.setFormatter(formatter)
-            logger.addHandler(file_handler)
-        logger.setLevel(logging.INFO)
+        with _log_setup_lock:
+            # Avoid adding multiple handlers for the same log file
+            file_path = os.path.abspath(log_file)
+            add_handler = True
+            for h in logger.handlers:
+                if isinstance(h, logging.FileHandler):
+                    # If a file handler for the same file already exists, don't add another
+                    if hasattr(h, 'baseFilename') and os.path.abspath(
+                            getattr(h, 'baseFilename', '')) == file_path:
+                        add_handler = False
+                        break
+            if add_handler:
+                file_handler = logging.FileHandler(file_path, mode='a')
+                file_handler.setLevel(logging.INFO)
+                formatter = logging.Formatter(
+                    '%(asctime)s - %(levelname)s - %(message)s')
+                file_handler.setFormatter(formatter)
+                logger.addHandler(file_handler)
+            logger.setLevel(logging.INFO)
     # Ensure output directory exists
     os.makedirs(output_dir, exist_ok=True)
     # Determine the list of tools to use
@@ -183,16 +186,20 @@ def download_article(doi: str, output_dir: str, output_filename: str = None,
 
 
 def bulk_download_articles(dois: list, output_dir: str, log_file: str = None,
-                           sleep: float = 0.0):
+                           sleep: float = 0.0, workers: int = 1):
     """
     Download multiple articles given a list of DOIs, saving them to the specified output directory.
     - dois: list of DOI strings to download.
     - output_dir: directory to save the downloaded files.
     - log_file: optional path to a log file for logging progress and errors.
-    - sleep: optional number of seconds to sleep between each download (default 0, no pause).
+    - sleep: optional number of seconds to sleep after each download (default 0, no pause).
+    - workers: number of concurrent downloads (default 1, sequential). Most of the
+      wall time is spent waiting on publisher and index APIs, so a handful of
+      threads gives a near-linear speedup; publisher rate limits still apply.
     Returns a dict mapping each DOI to the output file path or to an error message if failed.
     """
-    results = {}
+    import time
+    from concurrent.futures import ThreadPoolExecutor
     total = len(dois)
     use_tqdm = total > 1
     if use_tqdm:
@@ -200,22 +207,24 @@ def bulk_download_articles(dois: list, output_dir: str, log_file: str = None,
             from tqdm import tqdm
         except ImportError:
             use_tqdm = False
-    iterator = dois
-    if use_tqdm:
-        iterator = tqdm(dois, desc="Downloading articles", unit="article")
-    for doi in iterator:
+
+    def one(doi):
         try:
-            path = download_article(doi, output_dir, output_filename=None,
-                                    tools=None, log_file=log_file)
-            results[doi] = path
+            result = download_article(doi, output_dir, output_filename=None,
+                                      tools=None, log_file=log_file)
         except Exception as e:
-            results[doi] = f"ERROR: {e}"
-            # If not using tqdm, print error immediately
+            result = f"ERROR: {e}"
             if not use_tqdm:
                 print(f"Failed to download {doi}: {e}")
         if sleep > 0:
-            import time
             time.sleep(sleep)
+        return doi, result
+
+    with ThreadPoolExecutor(max_workers=max(1, workers)) as pool:
+        iterator = pool.map(one, dois)
+        if use_tqdm:
+            iterator = tqdm(iterator, total=total, desc="Downloading articles", unit="article")
+        results = dict(iterator)
     if use_tqdm:
         # After completing, print summary of failures (if any)
         failed = [d for d, res in results.items() if
