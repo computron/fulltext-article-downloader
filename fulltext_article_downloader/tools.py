@@ -258,8 +258,10 @@ def download_via_unpaywall(doi: str, output_path: str):
         pdf_url = loc.get("url_for_pdf")
         if pdf_url and pdf_url not in candidates:
             candidates.append(pdf_url)
+        # PMC moved from www.ncbi.nlm.nih.gov/pmc/articles/ to
+        # pmc.ncbi.nlm.nih.gov/articles/ in 2024; Unpaywall now reports both forms.
         m = re.search(
-            r"(?:ncbi\.nlm\.nih\.gov/pmc/articles/|europepmc\.org/articles/)(?:PMC)?(\d+)",
+            r"(?:ncbi\.nlm\.nih\.gov/(?:pmc/)?articles/|europepmc\.org/articles/)(?:PMC)?(\d+)",
             loc.get("url") or "")
         if m:
             epmc_url = f"https://europepmc.org/articles/PMC{m.group(1)}?pdf=render"
@@ -332,17 +334,23 @@ def download_via_crossref_tdm(doi: str, output_path: str):
         raise Exception(f"CrossRef API request failed (status {r.status_code})")
     data = r.json().get("message", {})
     links = data.get("link", [])
-    pdf_link = None
-    for link in links:
-        if link.get("content-type", "").startswith("application/pdf"):
-            pdf_link = link.get("URL")
-            break
-    if not pdf_link:
+    # Publishers rarely declare application/pdf here: APS (harvest.aps.org),
+    # ACS and RSC all register their full-text links with content-type
+    # "unspecified". Try every link that is not declared HTML, PDF-declared
+    # ones first, and let expect_pdf reject anything that is not a PDF.
+    candidates = [l.get("URL") for l in sorted(
+        links, key=lambda l: not l.get("content-type", "").startswith("application/pdf"))
+        if l.get("URL") and not l.get("content-type", "").startswith("text/html")]
+    if not candidates:
         raise Exception(f"No PDF link found via CrossRef for DOI {doi}")
-    # Download the PDF from the found link. The declared content-type is
-    # application/pdf, but some publishers serve an HTML citation stub at
-    # these URLs, so verify the content.
-    return _download_file(pdf_link, output_path, expect_pdf=True)
+    errors = []
+    for pdf_link in dict.fromkeys(candidates):
+        try:
+            return _download_file(pdf_link, output_path, expect_pdf=True)
+        except Exception as e:
+            errors.append(str(e))
+    raise Exception(
+        f"No CrossRef link returned a PDF for DOI {doi}: " + "; ".join(errors))
 
 
 def download_via_arxiv(doi: str, output_path: str):
@@ -484,3 +492,34 @@ def download_via_cambridge(doi: str, output_path: str):
     else:
         pdf_url = pdf_link
     return _download_file(pdf_url, output_path, expect_pdf=True)
+
+
+def download_via_osti(doi: str, output_path: str):
+    """
+    Download the accepted manuscript of a DOE-funded article from OSTI.
+    DOE public-access policy places accepted manuscripts on osti.gov about a
+    year after publication. Open-access indexes usually list only the OSTI
+    landing page for these, but the OSTI API resolves a DOI to the PDF.
+    No credentials needed. Returns the accepted manuscript, not the version
+    of record.
+    """
+    api_url = "https://www.osti.gov/api/v1/records"
+    try:
+        r = _get_with_retry(requests.get, api_url, params={"doi": doi},
+                            headers={"User-Agent": BROWSER_USER_AGENT},
+                            timeout=REQUEST_TIMEOUT)
+    except Exception as e:
+        raise Exception(f"Error connecting to OSTI API: {e}")
+    if r.status_code != 200:
+        raise Exception(f"OSTI API request failed (status code {r.status_code})")
+    records = r.json()
+    if not records:
+        raise Exception(f"No OSTI record for DOI {doi}")
+    record = records[0]
+    fulltext = [l["href"] for l in record.get("links", []) if l.get("rel") == "fulltext"]
+    pdf_url = fulltext[0] if fulltext else f"https://www.osti.gov/servlets/purl/{record['osti_id']}"
+    try:
+        return _download_file(pdf_url, output_path, expect_pdf=True)
+    except Exception as e:
+        # A record without full text is usually still under the 12-month embargo.
+        raise Exception(f"OSTI record {record['osti_id']} has no downloadable full text: {e}")

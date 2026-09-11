@@ -569,6 +569,85 @@ def test_crossref_get_uses_polite_pool_and_respects_concurrency(monkeypatch):
     assert all(p is None for p in seen) and peak[0] == 1
 
 
+def test_crossref_tdm_tries_unspecified_links(monkeypatch, tmp_path):
+    dummy_pdf = b"%PDF-1.4 APS"
+
+    def dummy_get(url, **kwargs):
+        if "api.crossref.org" in url:
+            return DummyResponse(status_code=200, json_data={"message": {"link": [
+                {"URL": "http://link.aps.org/article/10.1103/x", "content-type": "unspecified"},
+                {"URL": "http://harvest.aps.org/v2/journals/articles/10.1103/x/fulltext",
+                 "content-type": "unspecified"}]}})
+        if "harvest.aps.org" in url:
+            return DummyResponse(status_code=200, content=dummy_pdf)
+        return DummyResponse(status_code=200, content=b"<html>landing</html>")
+
+    monkeypatch.setattr(tools.requests, "get", dummy_get)
+    out = tmp_path / "aps.pdf"
+    assert tools.download_via_crossref_tdm("10.1103/x", str(out)) == str(out)
+    assert out.read_bytes() == dummy_pdf
+
+
+def test_osti_downloads_fulltext_link(monkeypatch, tmp_path):
+    dummy_pdf = b"%PDF-1.4 OSTI"
+
+    def dummy_get(url, params=None, **kwargs):
+        if "osti.gov/api" in url:
+            assert params == {"doi": "10.1016/j.actamat.2019.03.021"}
+            return DummyResponse(status_code=200, json_data=[{
+                "osti_id": 1234,
+                "links": [{"rel": "citation", "href": "https://www.osti.gov/biblio/1234"},
+                          {"rel": "fulltext", "href": "https://www.osti.gov/servlets/purl/1234"}]}])
+        if "servlets/purl/1234" in url:
+            return DummyResponse(status_code=200, content=dummy_pdf)
+        return DummyResponse(status_code=404)
+
+    monkeypatch.setattr(tools.requests, "get", dummy_get)
+    out = tmp_path / "osti.pdf"
+    assert tools.download_via_osti("10.1016/j.actamat.2019.03.021", str(out)) == str(out)
+    assert out.read_bytes() == dummy_pdf
+
+
+def test_osti_no_record_and_embargo(monkeypatch, tmp_path):
+    monkeypatch.setattr(tools.requests, "get",
+                        lambda url, **kw: DummyResponse(status_code=200, json_data=[]))
+    try:
+        tools.download_via_osti("10.1234/none", str(tmp_path / "x.pdf"))
+        assert False, "expected an exception"
+    except Exception as e:
+        assert "No OSTI record" in str(e)
+
+    def dummy_get(url, **kwargs):
+        if "osti.gov/api" in url:
+            return DummyResponse(status_code=200, json_data=[{"osti_id": 9, "links": []}])
+        return DummyResponse(status_code=404)
+
+    monkeypatch.setattr(tools.requests, "get", dummy_get)
+    try:
+        tools.download_via_osti("10.1234/embargo", str(tmp_path / "y.pdf"))
+        assert False, "expected an exception"
+    except Exception as e:
+        assert "no downloadable full text" in str(e)
+
+
+def test_unpaywall_recognises_new_pmc_domain(monkeypatch, tmp_path):
+    dummy_pdf = b"%PDF-1.4 EPMC"
+
+    def dummy_get(url, **kwargs):
+        if "api.unpaywall.org" in url:
+            return DummyResponse(status_code=200, json_data={"best_oa_location": None, "oa_locations": [
+                {"url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10275868/", "url_for_pdf": None}]})
+        if "europepmc.org/articles/PMC10275868?pdf=render" in url:
+            return DummyResponse(status_code=200, content=dummy_pdf)
+        return DummyResponse(status_code=403)
+
+    monkeypatch.setattr(tools.requests, "get", dummy_get)
+    monkeypatch.setenv("UNPAYWALL_EMAIL", "test@example.com")
+    out = tmp_path / "epmc.pdf"
+    assert tools.download_via_unpaywall("10.1039/d3sc01171b", str(out)) == str(out)
+    assert out.read_bytes() == dummy_pdf
+
+
 if __name__ == "__main__":
     import pytest
     import sys
