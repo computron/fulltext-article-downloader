@@ -47,7 +47,9 @@ Some methods need credentials:
 | Elsevier API | `ELSEVIER_API_KEY` | https://dev.elsevier.com |
 | Springer Open Access API | `SPRINGER_API_KEY` | https://dev.springernature.com |
 | Wiley TDM API | `WILEY_API_KEY` | https://onlinelibrary.wiley.com/library-info/resources/text-and-datamining |
-| Unpaywall (any valid email address) | `UNPAYWALL_EMAIL` | (enter your email address) |
+| Unpaywall and Crossref contact email (your own address) | `UNPAYWALL_EMAIL` | (enter your email address) |
+
+`UNPAYWALL_EMAIL` is sent only to Unpaywall and Crossref, which ask API users for a contact address; Crossref serves requests that carry one from its faster "polite" pool. Keys and the email stay on your machine.
 
 Set these environment variables **or** run the interactive helper:
 

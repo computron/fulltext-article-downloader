@@ -1,9 +1,71 @@
 import os
 import re
+import threading
+import time
 import requests
 import browser_cookie3
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
+
+# Seconds to wait for a connection / response. Without it a single stalled
+# request hangs a bulk download forever.
+REQUEST_TIMEOUT = 60
+# Sent when a caller gives no User-Agent. Several repositories answer the
+# python-requests default with an HTML interstitial instead of the PDF
+# (eScholarship returns 202 + HTML), while any current browser UA gets the file.
+BROWSER_USER_AGENT = (
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+)
+# Status codes worth one retry: rate limiting and transient server errors.
+# Publisher and index APIs return these sporadically under concurrent load,
+# and a single 2 s pause usually clears them.
+RETRY_STATUS_CODES = (429, 500, 502, 503, 504)
+
+
+def _get_with_retry(get, url, **kwargs):
+    """Call `get(url, **kwargs)`, retrying once on a connection error or a
+    status in RETRY_STATUS_CODES, after the server's Retry-After (capped at
+    30 s) or 2 s."""
+    for attempt in (0, 1):
+        try:
+            response = get(url, **kwargs)
+        except Exception:
+            if attempt:
+                raise
+            time.sleep(2)
+            continue
+        if response.status_code in RETRY_STATUS_CODES and not attempt:
+            retry_after = str(response.headers.get("Retry-After", ""))
+            time.sleep(min(float(retry_after), 30) if retry_after.isdigit() else 2)
+            continue
+        return response
+    return response
+
+
+# Crossref's limits depend on the pool. With a contact email ("polite" pool)
+# it allows 10 requests/s and 3 in flight; without one, 5/s and 1 in flight.
+# Concurrent runs exceed the anonymous limit at once and get HTTP 429, and a
+# failed publisher lookup silently drops the publisher-specific tools.
+_crossref_slots = {True: threading.BoundedSemaphore(3), False: threading.BoundedSemaphore(1)}
+_crossref_pace_lock = threading.Lock()
+_crossref_last_call = [0.0]
+
+
+def _crossref_get(url):
+    """GET a Crossref API URL with the configured contact email (UNPAYWALL_EMAIL),
+    paced to the pool's rate and concurrency limits."""
+    email = os.getenv("UNPAYWALL_EMAIL")
+    min_gap = 0.1 if email else 0.2
+    with _crossref_slots[bool(email)]:
+        with _crossref_pace_lock:
+            wait = _crossref_last_call[0] + min_gap - time.time()
+            if wait > 0:
+                time.sleep(wait)
+            _crossref_last_call[0] = time.time()
+        return _get_with_retry(requests.get, url,
+                               params={"mailto": email} if email else None,
+                               timeout=REQUEST_TIMEOUT)
 
 def _download_file(url: str, output_path: str, headers=None, session=None,
                    expect_pdf=False):
@@ -17,9 +79,10 @@ def _download_file(url: str, output_path: str, headers=None, session=None,
     for routes that can legitimately return non-PDF full text (e.g. XML).
     """
     req = session.get if session else requests.get
-    # Provide default headers if none given? (We won't set a default UA here, let caller provide if needed)
+    headers = {"User-Agent": BROWSER_USER_AGENT, **(headers or {})}
     try:
-        response = req(url, headers=headers, stream=True)
+        response = _get_with_retry(req, url, headers=headers, stream=True,
+                                   timeout=REQUEST_TIMEOUT)
     except Exception as e:
         raise Exception(f"Request error for {url}: {e}")
     if response.status_code != 200:
@@ -73,9 +136,10 @@ def download_via_elsevier(doi: str, output_path: str):
 
     def _request(accept):
         try:
-            return requests.get(
-                url, headers={"X-ELS-APIKey": api_key, "Accept": accept},
-                params=params)
+            return _get_with_retry(
+                requests.get, url,
+                headers={"X-ELS-APIKey": api_key, "Accept": accept},
+                params=params, timeout=REQUEST_TIMEOUT)
         except Exception as e:
             raise Exception(f"Error connecting to Elsevier API: {e}")
 
@@ -176,7 +240,7 @@ def download_via_unpaywall(doi: str, output_path: str):
             "UNPAYWALL_EMAIL is not set. Please set this to use Unpaywall.")
     api_url = f"https://api.unpaywall.org/v2/{doi}?email={email}"
     try:
-        r = requests.get(api_url)
+        r = _get_with_retry(requests.get, api_url, timeout=REQUEST_TIMEOUT)
     except Exception as e:
         raise Exception(f"Error connecting to Unpaywall API: {e}")
     if r.status_code != 200:
@@ -261,7 +325,7 @@ def download_via_crossref_tdm(doi: str, output_path: str):
     """
     api_url = f"https://api.crossref.org/works/{doi}"
     try:
-        r = requests.get(api_url)
+        r = _crossref_get(api_url)
     except Exception as e:
         raise Exception(f"Error connecting to CrossRef API: {e}")
     if r.status_code != 200:
@@ -307,7 +371,8 @@ def download_via_elife(doi: str, output_path: str):
                       "Chrome/90.0.4430.93 Safari/537.36"
     }
     try:
-        response = requests.get(doi_url, headers=headers, allow_redirects=True)
+        response = requests.get(doi_url, headers=headers, allow_redirects=True,
+                                timeout=REQUEST_TIMEOUT)
     except Exception as e:
         raise Exception(f"Failed to resolve DOI {doi}: {e}")
     if response.status_code != 200:
@@ -361,7 +426,7 @@ def download_via_aps(doi: str, output_path: str):
     crossref_url = f"https://api.crossref.org/works/{doi}"
     pdf_url = None
     try:
-        r = session.get(crossref_url)
+        r = session.get(crossref_url, timeout=REQUEST_TIMEOUT)
         if r.status_code == 200:
             data = r.json().get('message', {})
             for link in data.get('link', []):
@@ -390,7 +455,8 @@ def download_via_cambridge(doi: str, output_path: str):
             doi = doi.split("doi.org/")[-1]
     doi_url = f"https://doi.org/{doi}"
     try:
-        response = requests.get(doi_url, allow_redirects=True)
+        response = requests.get(doi_url, allow_redirects=True,
+                                timeout=REQUEST_TIMEOUT)
     except Exception as e:
         raise Exception(f"Failed to resolve DOI {doi}: {e}")
     if response.status_code != 200:
@@ -399,7 +465,7 @@ def download_via_cambridge(doi: str, output_path: str):
     article_url = response.url
     html = None
     try:
-        html = requests.get(article_url).text
+        html = requests.get(article_url, timeout=REQUEST_TIMEOUT).text
     except Exception as e:
         raise Exception(f"Failed to load article page: {e}")
     soup = BeautifulSoup(html, "html.parser")
