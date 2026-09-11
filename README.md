@@ -11,7 +11,7 @@
 * **Multiple retrieval methods** – Elsevier, Wiley, Springer Open Access, CrossRef TDM links, Unpaywall, OSTI (accepted manuscripts of DOE-funded articles), and direct scraping for publishers that lack easy APIs (e.g. PLOS, eLife, Cambridge, APS).
 * **Automatic fallback logic** – The package selects the best method based on the DOI’s publisher; if one fails, the next is tried automatically.
 * **Configurable tool order** – Per‑publisher method sequences are configurable; defaults cover most major publishers and preprint servers.
-* **Batch downloads with progress** – Sequentially download large DOI lists with a `tqdm` progress bar and optional sleep between requests.
+* **Batch downloads with progress** – Download large DOI lists with a `tqdm` progress bar, an optional number of concurrent workers, and an optional sleep between requests.
 * **Integrated logging** – Console progress plus detailed file logs that record which tool succeeded or why a DOI failed.
 * **Easy API‑key management** – Store credentials via environment variables or the interactive `fulltext-config` script.
 * **Command‑line interface (CLI)** – `fulltext-download` lets you fetch an article without writing Python.
@@ -132,7 +132,8 @@ results = bulk_download_articles(
     dois,
     output_dir="papers",
     log_file="download.log",
-    sleep=0.2,  # seconds between downloads
+    sleep=0.2,  # seconds after each download
+    workers=4,  # concurrent downloads (default 1, sequential)
 )
 ```
 

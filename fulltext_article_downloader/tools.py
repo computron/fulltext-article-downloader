@@ -190,10 +190,36 @@ def download_via_springerpdf(doi: str, output_path: str):
                           expect_pdf=True)
 
 
+# Wiley's published TDM limits: 3 requests per second, 60 per 10 minutes.
+# Past the sustained limit the API answers HTTP 500 for every request until
+# the window clears, so a bulk run without pacing loses the rest of its
+# Wiley articles. Timestamps of recent calls, shared across threads.
+WILEY_WINDOW_SECONDS = 600.0
+WILEY_MAX_PER_WINDOW = 60
+WILEY_MIN_GAP_SECONDS = 0.34
+_wiley_calls = []
+_wiley_lock = threading.Lock()
+
+
+def _wiley_rate_limit():
+    """Block until another Wiley TDM request fits within the published limits."""
+    with _wiley_lock:
+        now = time.time()
+        _wiley_calls[:] = [t for t in _wiley_calls if now - t < WILEY_WINDOW_SECONDS]
+        wait = 0.0
+        if len(_wiley_calls) >= WILEY_MAX_PER_WINDOW:
+            wait = WILEY_WINDOW_SECONDS - (now - _wiley_calls[0])
+        elif _wiley_calls:
+            wait = max(0.0, WILEY_MIN_GAP_SECONDS - (now - _wiley_calls[-1]))
+        if wait > 0:
+            time.sleep(wait)
+        _wiley_calls.append(time.time())
+
+
 def download_via_wiley(doi: str, output_path: str):
     """
     Download the PDF of a Wiley article via the Wiley TDM API.
-    Requires a Wiley API key.
+    Requires a Wiley API key. Requests are paced to Wiley's published limits.
     """
     api_key = os.getenv("WILEY_API_KEY")
     if not api_key:
@@ -202,8 +228,9 @@ def download_via_wiley(doi: str, output_path: str):
     base_url = "https://api.wiley.com/onlinelibrary/tdm/v1/articles/"
     url = base_url + doi
     headers = {"Wiley-TDM-Client-Token": api_key}
+    _wiley_rate_limit()
     try:
-        return _download_file(url, output_path, headers=headers)
+        return _download_file(url, output_path, headers=headers, expect_pdf=True)
     except Exception as e:
         # Provide a more specific hint on failure
         raise Exception(
