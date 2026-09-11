@@ -7,23 +7,23 @@ logging.basicConfig(stream=sys.stdout, level=logging.WARNING)
 
 # Mapping of publisher names to preferred tool order
 PUBLISHER_TOOL_MAP = {
-    "Elsevier BV": ["unpaywall", "elsevier"],
-    "Springer Science and Business Media LLC": ["springerpdf", "unpaywall", "springeropen"],
-    "Wiley": ["wiley", "unpaywall"],
-    "American Chemical Society (ACS)": ["unpaywall"],
-    "Royal Society of Chemistry (RSC)": ["unpaywall"],
-    "American Institute of Physics (AIP)": ["unpaywall"],
-    "American Physical Society (APS)": ["aps", "unpaywall"],
-    "Oxford University Press (OUP)": ["unpaywall"],
-    "Cambridge University Press (CUP)": ["cambridge", "unpaywall"],
-    "Taylor & Francis": ["unpaywall"],
+    "Elsevier BV": ["unpaywall", "elsevier", "osti"],
+    "Springer Science and Business Media LLC": ["springerpdf", "unpaywall", "springeropen", "osti"],
+    "Wiley": ["wiley", "unpaywall", "osti"],
+    "American Chemical Society (ACS)": ["unpaywall", "crossref_tdm", "osti"],
+    "Royal Society of Chemistry (RSC)": ["unpaywall", "crossref_tdm", "osti"],
+    "American Institute of Physics (AIP)": ["unpaywall", "crossref_tdm", "osti"],
+    "American Physical Society (APS)": ["aps", "unpaywall", "crossref_tdm", "osti"],
+    "Oxford University Press (OUP)": ["unpaywall", "osti"],
+    "Cambridge University Press (CUP)": ["cambridge", "unpaywall", "osti"],
+    "Taylor & Francis": ["unpaywall", "osti"],
     "Public Library of Science (PLoS)": ["plos", "unpaywall"],
     "bioRxiv": ["paperscraper", "unpaywall"],
     "medRxiv": ["paperscraper", "unpaywall"],
     "chemRxiv": ["paperscraper", "unpaywall"],
     "arXiv": ["paperscraper", "arxiv", "unpaywall"],
     "eLife Sciences Publications, Ltd": ["elife", "unpaywall"],
-    "Institute of Electrical and Electronics Engineers (IEEE)": ["unpaywall"]
+    "Institute of Electrical and Electronics Engineers (IEEE)": ["unpaywall", "osti"]
 }
 
 # Mapping of DOI prefix to known preprint server (for quick identification without API calls)
@@ -96,7 +96,8 @@ TOOL_FUNCTIONS = {
     "elife": tools.download_via_elife,
     "paperscraper": tools.download_via_paperscraper,
     "aps": tools.download_via_aps,
-    "cambridge": tools.download_via_cambridge
+    "cambridge": tools.download_via_cambridge,
+    "osti": tools.download_via_osti
 }
 
 
@@ -139,9 +140,9 @@ def download_article(doi: str, output_dir: str, output_filename: str = None,
     if tools is None:
         publisher = get_publisher_from_doi(doi)
         if publisher:
-            method_list = PUBLISHER_TOOL_MAP.get(publisher, ["unpaywall", "crossref_tdm"])
+            method_list = PUBLISHER_TOOL_MAP.get(publisher, ["unpaywall", "crossref_tdm", "osti"])
         else:
-            method_list = ["unpaywall", "crossref_tdm"]
+            method_list = ["unpaywall", "crossref_tdm", "osti"]
     else:
         method_list = tools
     # Sanitize DOI for use in file name (replace disallowed characters with '_')

@@ -8,7 +8,7 @@
 
 ## Features
 
-* **Multiple retrieval methods** – Elsevier, Wiley, Springer Open Access, CrossRef TDM links, Unpaywall, and direct scraping for publishers that lack easy APIs (e.g. PLOS, eLife, Cambridge, APS).
+* **Multiple retrieval methods** – Elsevier, Wiley, Springer Open Access, CrossRef TDM links, Unpaywall, OSTI (accepted manuscripts of DOE-funded articles), and direct scraping for publishers that lack easy APIs (e.g. PLOS, eLife, Cambridge, APS).
 * **Automatic fallback logic** – The package selects the best method based on the DOI’s publisher; if one fails, the next is tried automatically.
 * **Configurable tool order** – Per‑publisher method sequences are configurable; defaults cover most major publishers and preprint servers.
 * **Batch downloads with progress** – Sequentially download large DOI lists with a `tqdm` progress bar and optional sleep between requests.
@@ -169,9 +169,9 @@ The tool is composed of multiple sub-tools intended to support various publisher
 
 | Publisher / source | Default tool order                                                  |
 | ------------------ | --------------------------------------------------------------------|
-| Elsevier           | `unpaywall` → `elsevier` (PDF when entitled, else XML)              |
-| Springer / Nature  | `springerpdf` → `unpaywall` → `springeropen` (XML) → `crossref_tdm` |
-| Wiley              | `wiley` → `unpaywall`                                               |
+| Elsevier           | `unpaywall` → `elsevier` (PDF when entitled, else XML) → `osti`     |
+| Springer / Nature  | `springerpdf` → `unpaywall` → `springeropen` (XML) → `osti`         |
+| Wiley              | `wiley` → `unpaywall` → `osti`                                      |
 | PLOS               | `plos` → `unpaywall`                                                |
 | Preprint servers   | `paperscraper` → `unpaywall`                                        |
 
@@ -179,8 +179,11 @@ The `elsevier` tool asks for the PDF first and keeps it only when the API key is
 | arXiv              | `paperscraper` → `arxiv` → `unpaywall`                              |
 | eLife              | `elife` → `unpaywall`                                               |
 | Cambridge          | `cambridge` → `unpaywall`                                           |
-| APS                | `aps` → `unpaywall`                                                 |
-| Others             | `unpaywall`                                                         |
+| APS                | `aps` → `unpaywall` → `crossref_tdm` → `osti`                       |
+| ACS, RSC, AIP      | `unpaywall` → `crossref_tdm` → `osti`                               |
+| Others             | `unpaywall` → `crossref_tdm` → `osti`                               |
+
+The `osti` tool queries the OSTI API for the DOI and downloads the accepted manuscript that DOE-funded articles receive on osti.gov about a year after publication. It needs no credentials and is the last resort for subscription publishers; records still under embargo have no full text and the tool moves on.
 
 See the ``PUBLISHER_TOOL_MAP`` in ``downloader.py``.
 
