@@ -52,7 +52,7 @@ class DummySession:
         self.cookies = {}  # dummy cookie jar
 
     def get(self, url, headers=None, params=None, stream=None,
-            allow_redirects=None):
+            allow_redirects=None, **kwargs):
         return self._dummy_get(url, headers=headers, params=params,
                                stream=stream, allow_redirects=allow_redirects)
 
@@ -463,6 +463,110 @@ def test_cambridge_no_pdf(monkeypatch):
         tools.download_via_cambridge("10.1111/xxxx.999", "out.pdf")
     except Exception as e:
         assert "find PDF link" in str(e)
+
+
+def test_every_request_carries_a_timeout(monkeypatch, tmp_path):
+    seen = []
+
+    def dummy_get(url, **kwargs):
+        seen.append(kwargs.get("timeout"))
+        if "api.crossref.org" in url:
+            return DummyResponse(status_code=200, json_data={"message": {
+                "link": [{"URL": "http://example.com/t.pdf",
+                          "content-type": "application/pdf"}]}})
+        return DummyResponse(status_code=200, content=b"%PDF-1.4 x")
+
+    monkeypatch.setattr(tools.requests, "get", dummy_get)
+    tools.download_via_crossref_tdm("10.1234/x", str(tmp_path / "t.pdf"))
+    assert seen and all(t == tools.REQUEST_TIMEOUT for t in seen)
+
+
+def test_download_file_sends_browser_user_agent_by_default(monkeypatch, tmp_path):
+    seen = {}
+
+    def dummy_get(url, headers=None, **kwargs):
+        seen.update(headers or {})
+        return DummyResponse(status_code=200, content=b"%PDF-1.4 x")
+
+    monkeypatch.setattr(tools.requests, "get", dummy_get)
+    tools._download_file("http://example.com/a.pdf", str(tmp_path / "a.pdf"))
+    assert seen["User-Agent"] == tools.BROWSER_USER_AGENT
+
+
+def test_download_file_keeps_caller_user_agent(monkeypatch, tmp_path):
+    seen = {}
+
+    def dummy_get(url, headers=None, **kwargs):
+        seen.update(headers or {})
+        return DummyResponse(status_code=200, content=b"%PDF-1.4 x")
+
+    monkeypatch.setattr(tools.requests, "get", dummy_get)
+    tools._download_file("http://example.com/a.pdf", str(tmp_path / "a.pdf"),
+                         headers={"User-Agent": "custom", "Referer": "r"})
+    assert seen["User-Agent"] == "custom" and seen["Referer"] == "r"
+
+
+def test_download_file_retries_once_on_transient_error(monkeypatch, tmp_path):
+    calls = []
+    monkeypatch.setattr(tools.time, "sleep", lambda s: None)
+
+    def dummy_get(url, **kwargs):
+        calls.append(url)
+        if len(calls) == 1:
+            return DummyResponse(status_code=503)
+        return DummyResponse(status_code=200, content=b"%PDF-1.4 ok")
+
+    monkeypatch.setattr(tools.requests, "get", dummy_get)
+    out = tmp_path / "r.pdf"
+    assert tools._download_file("http://example.com/r.pdf", str(out), expect_pdf=True) == str(out)
+    assert len(calls) == 2
+
+
+def test_download_file_does_not_retry_403(monkeypatch, tmp_path):
+    calls = []
+    monkeypatch.setattr(tools.requests, "get",
+                        lambda url, **kw: calls.append(url) or DummyResponse(status_code=403))
+    try:
+        tools._download_file("http://example.com/x.pdf", str(tmp_path / "x.pdf"))
+        assert False, "expected an exception"
+    except Exception as e:
+        assert "status code: 403" in str(e)
+    assert len(calls) == 1
+
+
+def test_crossref_get_uses_polite_pool_and_respects_concurrency(monkeypatch):
+    import threading
+    import time as _time
+    active, peak, seen, lock = [0], [0], [], threading.Lock()
+
+    def dummy_get(url, params=None, **kwargs):
+        seen.append(params)
+        with lock:
+            active[0] += 1
+            peak[0] = max(peak[0], active[0])
+        _time.sleep(0.05)
+        with lock:
+            active[0] -= 1
+        return DummyResponse(status_code=200, json_data={"message": {}})
+
+    monkeypatch.setattr(tools.requests, "get", dummy_get)
+    monkeypatch.setenv("UNPAYWALL_EMAIL", "me@example.org")
+    threads = [threading.Thread(target=tools._crossref_get,
+                                args=("https://api.crossref.org/works/10.1/x",))
+               for _ in range(8)]
+    [t.start() for t in threads]
+    [t.join() for t in threads]
+    assert all(p == {"mailto": "me@example.org"} for p in seen)
+    assert 1 <= peak[0] <= 3
+
+    seen.clear(); peak[0] = 0
+    monkeypatch.delenv("UNPAYWALL_EMAIL")
+    threads = [threading.Thread(target=tools._crossref_get,
+                                args=("https://api.crossref.org/works/10.1/x",))
+               for _ in range(4)]
+    [t.start() for t in threads]
+    [t.join() for t in threads]
+    assert all(p is None for p in seen) and peak[0] == 1
 
 
 if __name__ == "__main__":

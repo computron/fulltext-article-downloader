@@ -59,11 +59,11 @@ def get_publisher_from_doi(doi: str):
     # Query CrossRef for metadata
     crossref_url = f"https://api.crossref.org/works/{doi}"
     try:
-        r = requests.get(crossref_url)
+        r = tools._crossref_get(crossref_url)
         if r.status_code == 404:
             # Try DataCite if not found on CrossRef
             datacite_url = f"https://api.datacite.org/dois/{doi}"
-            r2 = requests.get(datacite_url)
+            r2 = requests.get(datacite_url, timeout=tools.REQUEST_TIMEOUT)
             if r2.status_code == 200:
                 data = r2.json()
                 publisher = data.get("data", {}).get("attributes", {}).get(
