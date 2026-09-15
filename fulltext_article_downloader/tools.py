@@ -3,9 +3,17 @@ import re
 import threading
 import time
 import requests
-import browser_cookie3
 from bs4 import BeautifulSoup
-from urllib.parse import urlparse
+from urllib.parse import quote, urljoin, urlparse
+
+try:  # optional: Chrome TLS fingerprint for hosts that reject plain HTTPS clients
+    from curl_cffi import requests as _cffi_requests
+except ImportError:
+    _cffi_requests = None
+try:  # optional: only the APS route reads browser cookies
+    import browser_cookie3
+except ImportError:
+    browser_cookie3 = None
 
 # Seconds to wait for a connection / response. Without it a single stalled
 # request hangs a bulk download forever.
@@ -17,10 +25,27 @@ BROWSER_USER_AGENT = (
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
 )
+# Some repositories do the opposite of nature.com: HAL serves an HTML viewer
+# page to browser User-Agents and the PDF to non-browser clients, and a few
+# DSpace hosts answer browsers with 406. Downloads therefore retry once with
+# the plain python-requests User-Agent when the browser UA gets no PDF.
+PLAIN_USER_AGENT = requests.utils.default_user_agent()
 # Status codes worth one retry: rate limiting and transient server errors.
 # Publisher and index APIs return these sporadically under concurrent load,
 # and a single 2 s pause usually clears them.
 RETRY_STATUS_CODES = (429, 500, 502, 503, 504)
+
+
+class Fetched(str):
+    """Path of a downloaded file. Behaves as a plain str; `note` carries a
+    caveat when the file is not the publisher's version of record (preprint,
+    accepted manuscript) and `source` names the route that produced it."""
+
+    def __new__(cls, path, note=None, source=None):
+        obj = super().__new__(cls, path)
+        obj.note = note
+        obj.source = source
+        return obj
 
 
 def _get_with_retry(get, url, **kwargs):
@@ -70,39 +95,122 @@ def _crossref_get(url):
 def _download_file(url: str, output_path: str, headers=None, session=None,
                    expect_pdf=False):
     """
-    Helper to download a file from a URL to the given output path using streaming.
-    Raises an Exception if the HTTP status is not 200.
-    With expect_pdf=True, also verify the downloaded file starts with the
-    %PDF- magic bytes; publishers frequently serve an HTML error or landing
-    page with status 200, which would otherwise be saved as a fake .pdf.
-    On mismatch the file is removed and an Exception raised. Leave it False
-    for routes that can legitimately return non-PDF full text (e.g. XML).
+    Download a URL to output_path using streaming. Raises on a non-200 status.
+    With expect_pdf=True the file must start with the %PDF- magic bytes;
+    publishers frequently serve an HTML error or landing page with status 200,
+    which would otherwise be saved as a fake .pdf. On mismatch the file is
+    removed and an Exception raised. Leave it False for routes that can
+    legitimately return non-PDF full text (e.g. XML).
+
+    A browser User-Agent is sent unless the caller sets one. When that yields
+    no PDF (HTML body, 403 or 406) the request is retried with the plain
+    python-requests User-Agent, then, if curl_cffi is installed and no session
+    cookies are involved, with a Chrome TLS fingerprint.
     """
     req = session.get if session else requests.get
-    headers = {"User-Agent": BROWSER_USER_AGENT, **(headers or {})}
+    caller = headers or {}
+    browser_headers = {"User-Agent": BROWSER_USER_AGENT, **caller}
     try:
-        response = _get_with_retry(req, url, headers=headers, stream=True,
-                                   timeout=REQUEST_TIMEOUT)
+        return _fetch_once(req, url, output_path, browser_headers, expect_pdf)
+    except _Retryable as e:
+        last_error = e
+    # A non-PDF body or 406 is what a UA-sniffing repository returns to browsers.
+    if "User-Agent" not in caller and last_error.status in (200, 406):
+        try:
+            return _fetch_once(req, url, output_path, {"User-Agent": PLAIN_USER_AGENT, **caller}, expect_pdf)
+        except _Retryable as e:
+            last_error = e
+    # 403 or an anti-bot page: try a real browser TLS fingerprint.
+    if _cffi_requests is not None and session is None and last_error.status in (200, 403):
+        try:
+            return _fetch_once(_cffi_requests.get, url, output_path, browser_headers, expect_pdf,
+                               impersonate="chrome")
+        except Exception:
+            pass
+    raise Exception(str(last_error))
+
+
+class _Retryable(Exception):
+    """A failure that a different User-Agent or TLS fingerprint may fix."""
+
+    def __init__(self, message, status):
+        super().__init__(message)
+        self.status = status
+
+
+def _fetch_once(get, url, output_path, headers, expect_pdf, **extra):
+    try:
+        if extra:  # curl_cffi: no streaming, no retry wrapper
+            response = get(url, headers=headers, timeout=REQUEST_TIMEOUT, **extra)
+        else:
+            response = _get_with_retry(get, url, headers=headers, stream=True,
+                                       timeout=REQUEST_TIMEOUT)
     except Exception as e:
         raise Exception(f"Request error for {url}: {e}")
     if response.status_code != 200:
-        raise Exception(
-            f"Failed to download {url} (status code: {response.status_code})")
+        msg = f"Failed to download {url} (status code: {response.status_code})"
+        if response.status_code in (403, 406):
+            raise _Retryable(msg, response.status_code)
+        raise Exception(msg)
     try:
         with open(output_path, "wb") as f:
-            for chunk in response.iter_content(chunk_size=8192):
-                if chunk:
-                    f.write(chunk)
+            if extra:
+                f.write(response.content)
+            else:
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:
+                        f.write(chunk)
     except Exception as e:
+        if os.path.exists(output_path):  # a connection dropped mid-stream leaves a truncated file
+            os.remove(output_path)
         raise Exception(f"Error writing to file {output_path}: {e}")
     if expect_pdf:
         with open(output_path, "rb") as fh:
             magic = fh.read(5)
         if magic != b"%PDF-":
             os.remove(output_path)
-            raise Exception(
-                f"{url} returned non-PDF content (expected a PDF)")
+            raise _Retryable(f"{url} returned non-PDF content (expected a PDF)", 200)
     return output_path
+
+
+def _pdf_link_from_landing_page(url):
+    """Repository landing pages name their PDF in a citation_pdf_url meta tag
+    (put there for Google Scholar); failing that, take the first link to a
+    .pdf. HAL and Columbia's repository serve that markup to non-browser
+    clients and a script shell to browsers, so the plain User-Agent goes
+    first. Returns an absolute URL or None."""
+    for agent in (PLAIN_USER_AGENT, BROWSER_USER_AGENT):
+        try:
+            r = _get_with_retry(requests.get, url, headers={"User-Agent": agent}, timeout=REQUEST_TIMEOUT)
+        except Exception:
+            continue
+        if r.status_code != 200 or "html" not in r.headers.get("Content-Type", ""):
+            continue
+        soup = BeautifulSoup(r.text, "html.parser")
+        meta = soup.find("meta", attrs={"name": "citation_pdf_url"})
+        link = meta.get("content") if meta else None
+        if not link:
+            a = soup.find("a", href=re.compile(r"\.pdf(?:$|\?)", re.I))
+            link = a.get("href") if a else None
+        if link:
+            return urljoin(r.url or url, link)
+    return None
+
+
+def _download_pdf_or_linked(url, output_path):
+    """Download `url` as a PDF; when it is an HTML page instead (an open-access
+    index listed the landing page, not the file), follow the PDF link that
+    page advertises. Raises with both errors when neither works."""
+    try:
+        return _download_file(url, output_path, expect_pdf=True)
+    except Exception as e:
+        if "non-PDF content" not in str(e):
+            raise
+        first = e
+    link = _pdf_link_from_landing_page(url)
+    if not link or link == url:
+        raise Exception(f"{first} and the page names no PDF")
+    return _download_file(link, output_path, expect_pdf=True)
 
 
 # Elsevier reports entitlement on the PDF route through the X-ELS-Status
@@ -132,14 +240,16 @@ def download_via_elsevier(doi: str, output_path: str):
             "ELSEVIER_API_KEY is not set. Please configure your Elsevier API key.")
     url = f"https://api.elsevier.com/content/article/doi/{doi}"
     base_path = os.path.splitext(output_path)[0]
-    params = {"view": "FULL"}
 
+    # No view=FULL: entitled requests get the full text without it, and for
+    # articles the key is not entitled to the parameter turns the informative
+    # X-ELS-Status answer into a bare HTTP 400.
     def _request(accept):
         try:
             return _get_with_retry(
                 requests.get, url,
                 headers={"X-ELS-APIKey": api_key, "Accept": accept},
-                params=params, timeout=REQUEST_TIMEOUT)
+                timeout=REQUEST_TIMEOUT)
         except Exception as e:
             raise Exception(f"Error connecting to Elsevier API: {e}")
 
@@ -157,9 +267,18 @@ def download_via_elsevier(doi: str, output_path: str):
     # Otherwise take the full-text XML.
     response = _request("text/xml")
     if response.status_code == 200:
+        content = response.content
+        if b"<coredata>" in content and b"<ce:para" not in content and b"<xocs:rawtext" not in content:
+            raise Exception("Elsevier returned abstract-only XML (key not entitled to full text)")
         xml_path = base_path + ".xml"
         with open(xml_path, "wb") as f:
-            f.write(response.content)
+            f.write(content)
+        markdown = _elsevier_xml_to_markdown(content, doi)
+        if markdown:
+            with open(base_path + ".md", "w", encoding="utf-8") as f:
+                f.write(markdown)
+            return Fetched(xml_path, source="elsevier",
+                           note="full-text XML (no figures); a markdown rendering was saved next to it as .md")
         return xml_path
     elif response.status_code == 403:
         # Access denied. Elsevier's X-ELS-Status header says why:
@@ -176,26 +295,62 @@ def download_via_elsevier(doi: str, output_path: str):
             f"Elsevier API request failed (status code {response.status_code}).")
 
 
+def _elsevier_xml_to_markdown(content: bytes, doi: str):
+    """Render Elsevier full-text XML as markdown (title, authors, abstract,
+    body paragraphs). Returns None when the XML has no body paragraphs."""
+    import xml.etree.ElementTree as ET
+    ns = {"ce": "http://www.elsevier.com/xml/common/dtd", "dc": "http://purl.org/dc/elements/1.1/"}
+    try:
+        root = ET.fromstring(content)
+    except ET.ParseError:
+        return None
+    paragraphs = ["".join(p.itertext()).strip() for p in root.iter(f"{{{ns['ce']}}}para")]
+    paragraphs = [p for p in paragraphs if p]
+    if not paragraphs:
+        return None
+    title = next((t.text for t in root.iter(f"{{{ns['dc']}}}title") if t.text), doi)
+    authors = [a.text for a in root.iter(f"{{{ns['dc']}}}creator") if a.text]
+    abstract = next((d.text for d in root.iter(f"{{{ns['dc']}}}description") if d.text), "")
+    lines = [f"# {title.strip()}", "", f"**DOI**: {doi}"]
+    if authors:
+        lines.append(f"**Authors**: {', '.join(authors)}")
+    if abstract:
+        lines += ["", "## Abstract", "", abstract.strip()]
+    lines += ["", "## Full text", ""]
+    for p in paragraphs:
+        lines += [p, ""]
+    return "\n".join(lines)
+
+
 def download_via_springerpdf(doi: str, output_path: str):
     """
-    Download the PDF of a Springer article (including Nature) by constructing the direct PDF URL.
-    Note: This method mimics a browser and may not work for bulk or for closed-access content.
+    Download the PDF of a Springer Nature article from the publisher site.
+    Nature-family DOIs (10.1038/...) are fetched from nature.com, which serves
+    open-access PDFs to any client; everything else from SpringerLink. Works
+    for paywalled articles only from an entitled network.
     """
-    pdf_url = f"https://link.springer.com/content/pdf/{doi}.pdf"
-    headers = {
-        "User-Agent": "Mozilla/5.0",
-        "Referer": f"https://link.springer.com/article/{doi}"
-    }
-    return _download_file(pdf_url, output_path, headers=headers,
-                          expect_pdf=True)
+    urls = []
+    if doi.startswith("10.1038/"):
+        urls.append(f"https://www.nature.com/articles/{doi.split('/', 1)[1]}.pdf")
+    urls.append(f"https://link.springer.com/content/pdf/{doi}.pdf")
+    errors = []
+    for pdf_url in urls:
+        try:
+            return _download_file(pdf_url, output_path, expect_pdf=True)
+        except Exception as e:
+            errors.append(str(e))
+    raise Exception("; ".join(errors))
 
 
-# Wiley's published TDM limits: 3 requests per second, 60 per 10 minutes.
+# Wiley's published TDM limits are 3 requests per second and 60 per 10
+# minutes, but the API starts answering HTTP 500 after about 35 requests
+# in 10 minutes (measured, 403 answers count too), so requests are paced
+# to 30 per window.
 # Past the sustained limit the API answers HTTP 500 for every request until
 # the window clears, so a bulk run without pacing loses the rest of its
 # Wiley articles. Timestamps of recent calls, shared across threads.
 WILEY_WINDOW_SECONDS = 600.0
-WILEY_MAX_PER_WINDOW = 60
+WILEY_MAX_PER_WINDOW = 30
 WILEY_MIN_GAP_SECONDS = 0.34
 _wiley_calls = []
 _wiley_lock = threading.Lock()
@@ -226,7 +381,7 @@ def download_via_wiley(doi: str, output_path: str):
         raise Exception(
             "WILEY_API_KEY is not set. Please configure your Wiley API key.")
     base_url = "https://api.wiley.com/onlinelibrary/tdm/v1/articles/"
-    url = base_url + doi
+    url = base_url + quote(doi, safe="")
     headers = {"Wiley-TDM-Client-Token": api_key}
     _wiley_rate_limit()
     try:
@@ -280,11 +435,22 @@ def download_via_unpaywall(doi: str, output_path: str):
     for loc in data.get("oa_locations") or []:
         if loc not in locations:
             locations.append(loc)
-    candidates = []
+    # The publisher's version of record first, then accepted manuscripts, then
+    # submitted ones; within a version, repository copies before publisher links,
+    # which are the ones most often bot-blocked.
+    rank = {"publishedVersion": 0, "acceptedVersion": 1, "submittedVersion": 2}
+    locations.sort(key=lambda loc: (rank.get(loc.get("version"), 3), loc.get("host_type") == "publisher"))
+    candidates = []  # (url, version)
     for loc in locations:
+        version = loc.get("version") or ""
         pdf_url = loc.get("url_for_pdf")
-        if pdf_url and pdf_url not in candidates:
-            candidates.append(pdf_url)
+        if pdf_url and pdf_url not in [c[0] for c in candidates]:
+            candidates.append((pdf_url, version))
+        # Repository records often carry only the landing page; the page itself
+        # either serves the PDF or names it (HAL, DSpace, Columbia, TU Delft).
+        landing = loc.get("url")
+        if loc.get("host_type") == "repository" and landing and landing not in [c[0] for c in candidates]:
+            candidates.append((landing, version))
         # PMC moved from www.ncbi.nlm.nih.gov/pmc/articles/ to
         # pmc.ncbi.nlm.nih.gov/articles/ in 2024; Unpaywall now reports both forms.
         m = re.search(
@@ -292,18 +458,21 @@ def download_via_unpaywall(doi: str, output_path: str):
             loc.get("url") or "")
         if m:
             epmc_url = f"https://europepmc.org/articles/PMC{m.group(1)}?pdf=render"
-            if epmc_url not in candidates:
-                candidates.append(epmc_url)
+            if epmc_url not in [c[0] for c in candidates]:
+                candidates.append((epmc_url, version))
     if not candidates:
         raise Exception(f"No open-access PDF found for DOI: {doi}")
     errors = []
-    for pdf_url in candidates:
+    for pdf_url, version in candidates:
         try:
-            # expect_pdf guards against blocked locations returning an HTML
-            # page with status 200; on mismatch we move to the next location.
-            return _download_file(pdf_url, output_path, expect_pdf=True)
+            path = _download_pdf_or_linked(pdf_url, output_path)
         except Exception as e:
             errors.append(str(e))
+            continue
+        note = None
+        if version and version != "publishedVersion":
+            note = f"{version} from a repository, not the publisher's version of record"
+        return Fetched(path, note=note, source="unpaywall")
     raise Exception(
         f"All OA locations failed for DOI {doi}: " + "; ".join(errors))
 
@@ -384,14 +553,15 @@ def download_via_arxiv(doi: str, output_path: str):
     """
     Download the PDF of an arXiv paper given its DOI (DataCite DOI for arXiv).
     """
-    # Extract arXiv identifier from DOI
-    arxiv_id = doi.split("/")[-1]
-    if arxiv_id.lower().startswith("arxiv."):
-        arxiv_id = arxiv_id[len("arXiv."):]
-    if arxiv_id.lower().startswith("arxiv:"):
-        arxiv_id = arxiv_id[len("arXiv:"):]
-    pdf_url = f"https://arxiv.org/pdf/{arxiv_id}.pdf"
-    return _download_file(pdf_url, output_path, expect_pdf=True)
+    arxiv_id = doi
+    if arxiv_id.lower().startswith("10.48550/"):
+        arxiv_id = arxiv_id.split("/", 1)[1]
+    for prefix in ("arxiv.", "arxiv:"):
+        if arxiv_id.lower().startswith(prefix):
+            arxiv_id = arxiv_id[len(prefix):]
+    pdf_url = f"https://arxiv.org/pdf/{arxiv_id}"
+    path = _download_file(pdf_url, output_path, expect_pdf=True)
+    return Fetched(path, source="arxiv", note="arXiv preprint, not the publisher's version of record")
 
 
 def download_via_elife(doi: str, output_path: str):
@@ -443,6 +613,8 @@ def download_via_paperscraper(doi: str, output_path: str):
         save_pdf({'doi': doi}, filepath=output_path)
     except Exception as e:
         raise Exception(f"Paperscraper failed for DOI {doi}: {e}")
+    if not os.path.exists(output_path):  # save_pdf reports some failures only in its log
+        raise Exception(f"Paperscraper wrote no file for DOI {doi}")
     return output_path
 
 
@@ -453,6 +625,8 @@ def download_via_aps(doi: str, output_path: str):
     """
     # Create a session and load APS cookies from the default browser
     session = requests.Session()
+    if browser_cookie3 is None:
+        raise Exception("browser_cookie3 is not installed; install it to use the APS cookie route.")
     try:
         session.cookies.update(browser_cookie3.load(domain_name='aps.org'))
     except Exception as e:
@@ -521,6 +695,123 @@ def download_via_cambridge(doi: str, output_path: str):
     return _download_file(pdf_url, output_path, expect_pdf=True)
 
 
+def download_via_biorxiv(doi: str, output_path: str):
+    """
+    Download a bioRxiv or medRxiv preprint. Both servers share the 10.1101
+    prefix, so the bioRxiv API is asked which one holds the DOI and what its
+    latest version is; when the API is throttling this host (it then answers
+    with an empty or HTML body) the unversioned URL, which redirects to the
+    current version, is tried on both servers. www.biorxiv.org sits behind
+    Cloudflare and answers a share of requests with a transient 503, and with
+    429 plus Retry-After after a burst, so every request is paced and retried
+    accordingly. No credentials needed.
+    """
+    candidates = []  # (server, pdf_url)
+    for server in ("biorxiv", "medrxiv"):
+        _biorxiv_pace()
+        try:
+            r = _get_with_retry(requests.get, f"https://api.biorxiv.org/details/{server}/{doi}",
+                                timeout=REQUEST_TIMEOUT)
+            versions = r.json().get("collection") or [] if r.status_code == 200 else []
+        except Exception:
+            versions = []
+        if versions:
+            candidates = [(server, f"https://www.{server}.org/content/{doi}v{versions[-1].get('version', 1)}.full.pdf")]
+            break
+    if not candidates:
+        candidates = [(s, f"https://www.{s}.org/content/{doi}.full.pdf") for s in ("biorxiv", "medrxiv")]
+    errors = []
+    waited = False
+    for server, pdf_url in candidates:
+        for attempt in range(3):
+            _biorxiv_pace()
+            try:
+                path = _download_file(pdf_url, output_path, expect_pdf=True)
+                return Fetched(path, source="biorxiv", note=f"{server} preprint, not a journal version of record")
+            except Exception as e:
+                errors.append(str(e))
+                if "status code: 503" in str(e) and attempt < 2:
+                    time.sleep(3 * (attempt + 1))
+                elif "status code: 429" in str(e) and not waited:
+                    time.sleep(BIORXIV_RETRY_AFTER)
+                    waited = True
+                else:
+                    break
+    raise Exception(f"bioRxiv/medRxiv download failed for DOI {doi}: " + "; ".join(errors[-2:]))
+
+
+# bioRxiv rate-limits PDF downloads per address (HTTP 429 after roughly a
+# dozen in quick succession), so requests are spaced out.
+BIORXIV_MIN_GAP = 5.0
+BIORXIV_RETRY_AFTER = 100
+_biorxiv_last_call = [0.0]
+_biorxiv_lock = threading.Lock()
+
+
+def _biorxiv_pace():
+    with _biorxiv_lock:
+        wait = _biorxiv_last_call[0] + BIORXIV_MIN_GAP - time.time()
+        if wait > 0:
+            time.sleep(wait)
+        _biorxiv_last_call[0] = time.time()
+
+
+# www.mdpi.com refuses requests from cloud-provider address ranges (HTTP 403
+# for every User-Agent and TLS fingerprint), which is where agents commonly
+# run. The CDN that holds the article PDFs does not. Its path needs the
+# journal's URL slug: for most journals the DOI's journal code (ijms, jcm,
+# su), for the rest the title without spaces (energies, remotesensing), and
+# for a few neither.
+_MDPI_SLUGS = {"applied sciences": "applsci"}
+
+
+def download_via_mdpi(doi: str, output_path: str):
+    """Download an MDPI article from the publisher's CDN, built from the
+    Crossref record (journal, volume, article number). No credentials needed."""
+    m = re.match(r"10\.3390/([a-z]+)\d", doi.lower())
+    if not m:
+        raise Exception(f"Not an MDPI DOI: {doi}")
+    try:
+        r = _crossref_get(f"https://api.crossref.org/works/{doi}")
+        msg = r.json()["message"]
+    except Exception as e:
+        raise Exception(f"Crossref lookup failed for DOI {doi}: {e}")
+    title = (msg.get("container-title") or [""])[0].lower()
+    volume = msg.get("volume")
+    number = msg.get("article-number") or (msg.get("page") or "").split("-")[0]
+    if not (volume and number and number.isdigit()):
+        raise Exception(f"Crossref record for {doi} lacks a volume or article number")
+    slugs = [s for s in dict.fromkeys([m.group(1), re.sub(r"[^a-z0-9]", "", title), _MDPI_SLUGS.get(title)]) if s]
+    errors = []
+    for slug in slugs:
+        name = f"{slug}-{int(volume):02d}-{int(number):05d}"
+        try:
+            return _download_file(f"https://mdpi-res.com/d_attachment/{slug}/{name}/article_deploy/{name}.pdf",
+                                  output_path, expect_pdf=True)
+        except Exception as e:
+            errors.append(str(e))
+    raise Exception(f"No MDPI CDN path worked for DOI {doi}: " + "; ".join(errors))
+
+
+def download_via_zenodo(doi: str, output_path: str):
+    """Download the PDF attached to a Zenodo record (10.5281 DOIs; preprints,
+    reports and postprints deposited there). A concept DOI resolves to the
+    latest version. No credentials needed."""
+    m = re.search(r"zenodo\.(\d+)$", doi.lower())
+    if not m:
+        raise Exception(f"Not a Zenodo record DOI: {doi}")
+    try:
+        r = _get_with_retry(requests.get, f"https://zenodo.org/api/records/{m.group(1)}", timeout=REQUEST_TIMEOUT)
+    except Exception as e:
+        raise Exception(f"Error connecting to Zenodo: {e}")
+    if r.status_code != 200:
+        raise Exception(f"Zenodo has no record {m.group(1)} (status code {r.status_code})")
+    pdfs = [f for f in r.json().get("files") or [] if (f.get("key") or "").lower().endswith(".pdf")]
+    if not pdfs:
+        raise Exception(f"Zenodo record {m.group(1)} has no PDF file")
+    return _download_file(pdfs[0]["links"]["self"], output_path, expect_pdf=True)
+
+
 def download_via_osti(doi: str, output_path: str):
     """
     Download the accepted manuscript of a DOE-funded article from OSTI.
@@ -546,7 +837,219 @@ def download_via_osti(doi: str, output_path: str):
     fulltext = [l["href"] for l in record.get("links", []) if l.get("rel") == "fulltext"]
     pdf_url = fulltext[0] if fulltext else f"https://www.osti.gov/servlets/purl/{record['osti_id']}"
     try:
-        return _download_file(pdf_url, output_path, expect_pdf=True)
+        path = _download_file(pdf_url, output_path, expect_pdf=True)
     except Exception as e:
         # A record without full text is usually still under the 12-month embargo.
         raise Exception(f"OSTI record {record['osti_id']} has no downloadable full text: {e}")
+    return Fetched(path, source="osti", note="OSTI accepted manuscript, not the publisher's version of record")
+
+
+def download_via_europepmc(doi: str, output_path: str):
+    """
+    Download an open-access copy listed in Europe PMC's record for the DOI.
+    Besides PMC-hosted articles, Europe PMC records carry `fullTextUrlList`
+    entries pointing at repository copies (author manuscripts in institutional
+    archives) that Unpaywall lists without a PDF link. No credentials needed.
+    """
+    api_url = "https://www.ebi.ac.uk/europepmc/webservices/rest/search"
+    try:
+        r = _get_with_retry(requests.get, api_url,
+                            params={"query": f"DOI:{doi}", "format": "json", "resultType": "core"},
+                            headers={"User-Agent": BROWSER_USER_AGENT}, timeout=REQUEST_TIMEOUT)
+    except Exception as e:
+        raise Exception(f"Error connecting to Europe PMC: {e}")
+    if r.status_code != 200:
+        raise Exception(f"Europe PMC request failed (status code {r.status_code})")
+    results = (r.json().get("resultList") or {}).get("result") or []
+    candidates = []  # (url, note)
+    pmc_copy = None  # (pmcid, is_open_access) when the article's full text is in PMC
+    for rec in results:
+        if (rec.get("doi") or "").lower() != doi.lower():
+            continue
+        pmcid = rec.get("pmcid")
+        if pmcid and rec.get("inEPMC") == "Y":
+            pmc_copy = (pmcid, rec.get("isOpenAccess") == "Y")
+        if pmcid and rec.get("isOpenAccess") == "Y":
+            candidates.append((f"https://europepmc.org/articles/{pmcid}?pdf=render", None))
+        for u in (rec.get("fullTextUrlList") or {}).get("fullTextUrl") or []:
+            if u.get("documentStyle") == "pdf" and (u.get("availability") or "").lower() in ("open access", "free") and u.get("url"):
+                site = u.get("site") or ""
+                where = f" (via {site})" if site and site.lower() != "unpaywall" else ""
+                candidates.append((u["url"], f"open-access copy listed by Europe PMC{where}; may be an author manuscript"))
+    if not candidates and not pmc_copy:
+        raise Exception(f"Europe PMC lists no open-access PDF for DOI {doi}")
+    errors = []
+    for url, note in candidates:
+        try:
+            path = _download_file(url, output_path, expect_pdf=True)
+        except Exception as e:
+            errors.append(str(e))
+            continue
+        return Fetched(path, source="europepmc", note=note)
+    if pmc_copy:
+        # Author manuscripts deposited in PMC (NIH and other funder mandates) are in
+        # Europe PMC as full text even when the article is not open access; the PMC
+        # route gets the PDF render or, when that endpoint refuses, the JATS XML.
+        pmcid, open_access = pmc_copy
+        try:
+            path = download_via_pmc(pmcid, output_path)
+        except Exception as e:
+            errors.append(str(e))
+        else:
+            note = getattr(path, "note", None) if open_access else \
+                "PMC author manuscript, not the publisher's version of record"
+            return Fetched(path, source="europepmc", note=note)
+    raise Exception(f"Europe PMC locations failed for DOI {doi}: " + "; ".join(errors))
+
+
+def download_via_semantic(doi: str, output_path: str):
+    """
+    Download the open-access copy Semantic Scholar knows for the DOI: the
+    `openAccessPdf` link (mostly arXiv, Research Square and repository copies
+    of subscription articles) or, when the record carries none, the arXiv id
+    among its `externalIds`. With SEMANTIC_SCHOLAR_API_KEY a title search
+    also finds a second record of the same paper (its arXiv version); without
+    a key that endpoint answers 429. The file is usually a preprint.
+    """
+    headers = {"User-Agent": BROWSER_USER_AGENT}
+    api_key = os.getenv("SEMANTIC_SCHOLAR_API_KEY")
+    if api_key:
+        headers["x-api-key"] = api_key
+    try:
+        r = _semantic_get(f"https://api.semanticscholar.org/graph/v1/paper/DOI:{doi}",
+                          params={"fields": _SEMANTIC_FIELDS}, headers=headers, timeout=REQUEST_TIMEOUT)
+    except Exception as e:
+        raise Exception(f"Error connecting to Semantic Scholar: {e}")
+    if r.status_code == 404:
+        raise Exception(f"Semantic Scholar has no record for DOI {doi}")
+    if r.status_code != 200:
+        raise Exception(f"Semantic Scholar request failed (status code {r.status_code})")
+    record = r.json()
+    copy = _semantic_copy(record)
+    if not copy and api_key and record.get("title"):
+        copy = _semantic_search_by_title(record["title"], headers)
+    if not copy:
+        raise Exception(f"Semantic Scholar lists no open-access copy for DOI {doi}")
+    url, note = copy
+    if url.startswith("arxiv:"):
+        path = download_via_arxiv(url[6:], output_path)
+        return Fetched(path, source="semantic", note=note)
+    path = _download_pdf_or_linked(url, output_path)  # S2 lists some repository landing pages as PDFs
+    return Fetched(path, source="semantic", note=note)
+
+
+_SEMANTIC_FIELDS = "title,openAccessPdf,externalIds"
+
+
+def _semantic_copy(record):
+    """(url_or_arxiv_ref, note) for a Semantic Scholar paper record, or None."""
+    oa = record.get("openAccessPdf") or {}
+    if oa.get("url"):
+        note = None if (oa.get("status") or "").lower() in ("gold", "hybrid", "bronze") else \
+            "open-access copy found via Semantic Scholar, likely a preprint or author manuscript"
+        return oa["url"], note
+    arxiv_id = (record.get("externalIds") or {}).get("ArXiv")
+    if arxiv_id:
+        return f"arxiv:{arxiv_id}", "arXiv version listed by Semantic Scholar, not the publisher's version of record"
+    return None
+
+
+_semantic_lock = threading.Lock()
+_semantic_last_call = [0.0]
+
+
+def _semantic_get(url, **kwargs):
+    """Semantic Scholar allows 1 request/s per key and answers 429 beyond it:
+    requests are spaced 1 s apart across threads, and a 429 is retried with
+    exponential backoff (2, 4, 8 s) before giving up."""
+    for attempt in range(4):
+        with _semantic_lock:
+            wait = _semantic_last_call[0] + 1.0 - time.time()
+            if wait > 0:
+                time.sleep(wait)
+            _semantic_last_call[0] = time.time()
+        r = _get_with_retry(requests.get, url, **kwargs)
+        if r.status_code != 429 or attempt == 3:
+            return r
+        time.sleep(2 ** (attempt + 1))
+    return r
+
+
+def _semantic_search_by_title(title, headers):
+    from . import verify
+    try:
+        r = _semantic_get("https://api.semanticscholar.org/graph/v1/paper/search",
+                            params={"query": title, "fields": _SEMANTIC_FIELDS, "limit": 5},
+                            headers=headers, timeout=REQUEST_TIMEOUT)
+    except Exception:
+        return None
+    if r.status_code != 200:
+        return None
+    for hit in r.json().get("data") or []:
+        if verify.title_matches(hit.get("title") or "", title) and _semantic_copy(hit):
+            return _semantic_copy(hit)
+    return None
+
+
+def download_via_chemrxiv(doi: str, output_path: str):
+    """
+    Download a ChemRxiv preprint through the Cambridge Open Engage public API.
+    chemrxiv.org itself sits behind a bot check that blocks many hosts; the
+    API on cambridge.org returns the asset URL, which downloads normally.
+    """
+    api_url = f"https://www.cambridge.org/engage/coe/public-api/v1/items/doi/{doi}"
+    try:
+        r = _get_with_retry(requests.get, api_url, headers={"User-Agent": BROWSER_USER_AGENT},
+                            timeout=REQUEST_TIMEOUT)
+    except Exception as e:
+        raise Exception(f"Error connecting to the Open Engage API: {e}")
+    if r.status_code == 404:
+        raise Exception(f"ChemRxiv has no item for DOI {doi}")
+    if r.status_code != 200:
+        raise Exception(f"Open Engage API request failed (status code {r.status_code})")
+    pdf_url = ((r.json().get("asset") or {}).get("original") or {}).get("url")
+    if not pdf_url:
+        raise Exception(f"ChemRxiv item for DOI {doi} has no PDF asset")
+    path = _download_file(pdf_url, output_path, expect_pdf=True)
+    return Fetched(path, source="chemrxiv", note="ChemRxiv preprint, not the publisher's version of record")
+
+
+def download_via_pmc(pmcid: str, output_path: str):
+    """Download an open-access PubMed Central article by PMC id via Europe PMC's
+    PDF render. When the render endpoint refuses (it throttles hosts that ask
+    for many articles in a row), Europe PMC's REST service still serves the
+    full-text JATS XML, which is written next to the intended PDF path."""
+    try:
+        path = _download_file(f"https://europepmc.org/articles/{pmcid}?pdf=render", output_path, expect_pdf=True)
+        return Fetched(path, source="pmc")
+    except Exception as e:
+        pdf_error = e
+    # Europe PMC's REST service has the JATS XML of open-access articles; NCBI's
+    # efetch also serves the XML of author manuscripts, which Europe PMC does not.
+    number = re.sub(r"^PMC", "", pmcid, flags=re.I)
+    sources = [("Europe PMC", f"https://www.ebi.ac.uk/europepmc/webservices/rest/{pmcid}/fullTextXML", {}),
+               ("NCBI", "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi",
+                {"db": "pmc", "id": number, "retmode": "xml", **({"api_key": os.getenv("NCBI_API_KEY")} if os.getenv("NCBI_API_KEY") else {})})]
+    errors = [str(pdf_error)]
+    for name, url, params in sources:
+        try:
+            r = _get_with_retry(requests.get, url, params=params or None, timeout=REQUEST_TIMEOUT)
+        except Exception as e:
+            errors.append(f"{name} XML request failed: {e}")
+            continue
+        if r.status_code != 200 or b"<body" not in r.content:
+            errors.append(f"{name} has no full-text XML for {pmcid} (status code {r.status_code})")
+            continue
+        xml_path = os.path.splitext(output_path)[0] + ".xml"
+        with open(xml_path, "wb") as f:
+            f.write(r.content)
+        return Fetched(xml_path, source="pmc", note=f"full-text XML from {name}; the PDF render endpoint refused")
+    raise Exception("; ".join(errors))
+
+
+def download_via_openreview(review_id: str, output_path: str):
+    """Download a submission PDF from OpenReview by its id."""
+    headers = {"Referer": f"https://openreview.net/forum?id={review_id}"}
+    path = _download_file(f"https://openreview.net/pdf?id={review_id}", output_path,
+                          headers=headers, expect_pdf=True)
+    return Fetched(path, source="openreview", note="OpenReview submission, not a journal version of record")

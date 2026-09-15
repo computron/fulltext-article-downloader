@@ -26,4 +26,4 @@ def _load_api_keys():
 
 _load_api_keys()
 
-from .downloader import download_article, bulk_download_articles, get_publisher_from_doi, PUBLISHER_TOOL_MAP
+from .downloader import download_article, bulk_download_articles, fetch, fetch_many, get_publisher_from_doi, PUBLISHER_TOOL_MAP, DEFAULT_TOOLS
