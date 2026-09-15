@@ -1,0 +1,9 @@
+{
+  "name": "fulltext-article-downloader",
+  "displayName": "Full-text article downloader",
+  "version": "0.2.0",
+  "description": "Download the full text of research papers by DOI, arXiv, PMC or OpenReview id. Adds a skill that uses the fulltext-download CLI and an MCP server for agents.",
+  "author": { "name": "Anubhav Jain and Xu Huang" },
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json"
+}
