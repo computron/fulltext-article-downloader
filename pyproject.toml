@@ -1,0 +1,44 @@
+[project]
+name = "fulltext-article-downloader"
+version = "0.2.0"
+description = "Download the full text of research articles by DOI, arXiv, PMC or OpenReview id: publisher TDM APIs, open-access indexes and repositories, with verification of what was fetched"
+readme = "README.md"
+license = { text = "BSD-3-Clause" }
+requires-python = ">=3.10"
+authors = [
+    { name = "Anubhav Jain" },
+    { name = "Xu Huang" },
+]
+dependencies = [
+    "requests>=2.20.0",
+    "tqdm>=4.50.0",
+    "beautifulsoup4>=4.6.0",
+    "pypdf>=4.0",
+]
+
+[project.optional-dependencies]
+mcp = ["fastmcp>=2.0"]
+tls = ["curl-cffi>=0.7"]
+springer = ["sprynger>=0.3.0"]
+preprints = ["paperscraper>=0.1.0"]
+aps = ["browser-cookie3>=0.15.0"]
+all = ["fastmcp>=2.0", "curl-cffi>=0.7", "sprynger>=0.3.0", "paperscraper>=0.1.0", "browser-cookie3>=0.15.0"]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+fulltext-download = "fulltext_article_downloader.cli:main"
+fulltext-config = "fulltext_article_downloader.configure:main"
+fulltext-mcp = "fulltext_article_downloader.mcp_server:main"
+
+[project.urls]
+Homepage = "https://github.com/computron/fulltext-article-downloader"
+
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["fulltext_article_downloader"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

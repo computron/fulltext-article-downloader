@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "fulltext-article-downloader": {
+      "command": "uvx",
+      "args": ["--from", "fulltext-article-downloader[mcp]", "fulltext-mcp"],
+      "env": { "FULLTEXT_OUTPUT_DIR": "${CLAUDE_PROJECT_DIR}/papers" }
+    }
+  }
+}

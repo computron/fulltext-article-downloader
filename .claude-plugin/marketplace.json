@@ -1,0 +1,11 @@
+{
+  "name": "fulltext-article-downloader",
+  "owner": { "name": "computron" },
+  "plugins": [
+    {
+      "name": "fulltext-article-downloader",
+      "source": "./",
+      "description": "Full-text research paper downloads for agents: skill plus MCP server."
+    }
+  ]
+}
