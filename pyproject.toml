@@ -1,6 +1,6 @@
 [project]
 name = "fulltext-article-downloader"
-version = "0.2.0"
+version = "0.2.1"
 description = "Download the full text of research articles by DOI, arXiv, PMC or OpenReview id: publisher TDM APIs, open-access indexes and repositories, with verification of what was fetched"
 readme = "README.md"
 license = { text = "BSD-3-Clause" }

@@ -1,72 +1,72 @@
 {
-  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-07-09/server.schema.json",
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
   "name": "io.github.computron/fulltext-article-downloader",
   "description": "Full text of research papers by DOI, arXiv, PMC or OpenReview id, verified against the record",
   "repository": {
     "url": "https://github.com/computron/fulltext-article-downloader",
     "source": "github"
   },
-  "version": "0.2.0",
+  "version": "0.2.1",
   "packages": [
     {
-      "registry_type": "pypi",
+      "registryType": "pypi",
       "identifier": "fulltext-article-downloader",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "transport": {
         "type": "stdio"
       },
-      "runtime_hint": "uvx",
-      "runtime_arguments": [
+      "runtimeHint": "uvx",
+      "runtimeArguments": [
         {
           "type": "positional",
           "value": "--from",
-          "is_required": true
+          "isRequired": true
         },
         {
           "type": "positional",
           "value": "fulltext-article-downloader[mcp]",
-          "is_required": true
+          "isRequired": true
         },
         {
           "type": "positional",
           "value": "fulltext-mcp",
-          "is_required": true
+          "isRequired": true
         }
       ],
-      "environment_variables": [
+      "environmentVariables": [
         {
           "name": "UNPAYWALL_EMAIL",
           "description": "Contact email for Unpaywall and Crossref",
-          "is_required": false
+          "isRequired": false
         },
         {
           "name": "FULLTEXT_OUTPUT_DIR",
           "description": "Folder for downloaded files (default ./papers)",
-          "is_required": false
+          "isRequired": false
         },
         {
           "name": "WILEY_API_KEY",
           "description": "Wiley TDM token",
-          "is_required": false,
-          "is_secret": true
+          "isRequired": false,
+          "isSecret": true
         },
         {
           "name": "ELSEVIER_API_KEY",
           "description": "Elsevier API key",
-          "is_required": false,
-          "is_secret": true
+          "isRequired": false,
+          "isSecret": true
         },
         {
           "name": "SPRINGER_API_KEY",
           "description": "Springer Nature API key",
-          "is_required": false,
-          "is_secret": true
+          "isRequired": false,
+          "isSecret": true
         },
         {
           "name": "SEMANTIC_SCHOLAR_API_KEY",
           "description": "Semantic Scholar API key",
-          "is_required": false,
-          "is_secret": true
+          "isRequired": false,
+          "isSecret": true
         }
       ]
     }
