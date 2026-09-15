@@ -23,6 +23,7 @@ setup(
     packages=find_packages(),
     install_requires=[
         "requests>=2.20.0",
+        "pypdf>=4.0",
         "tqdm>=4.50.0",
         "beautifulsoup4>=4.6.0",
         "browser-cookie3>=0.15.0",

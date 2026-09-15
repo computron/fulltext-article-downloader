@@ -26,7 +26,8 @@ def main():
         ("ELSEVIER_API_KEY", "Elsevier API Key"),
         ("SPRINGER_API_KEY", "Springer API Key"),
         ("WILEY_API_KEY", "Wiley API Key"),
-        ("UNPAYWALL_EMAIL", "Unpaywall contact email")
+        ("UNPAYWALL_EMAIL", "Unpaywall contact email"),
+        ("SEMANTIC_SCHOLAR_API_KEY", "Semantic Scholar API Key (optional)")
     ]
     for key, description in key_prompts:
         if key in existing and existing[key]:
