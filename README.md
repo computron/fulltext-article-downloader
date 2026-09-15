@@ -1,4 +1,5 @@
 # fulltext-article-downloader
+<!-- mcp-name: io.github.computron/fulltext-article-downloader -->
 
 **fulltext-article-downloader** is a Python package for **programmatically downloading the full text of research articles** from a DOI, arXiv id, PubMed Central id or OpenReview id. It chains together publisher APIs, open-access indexes and repositories in a fallback sequence, checks that what came back is really the requested article, and can be used from Python, from the command line, or by an AI agent through an MCP server or a Claude Code skill.
 

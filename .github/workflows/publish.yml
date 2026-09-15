@@ -1,0 +1,60 @@
+# Release: push a tag like v0.2.0 (or publish a GitHub release) and this
+# workflow builds the package, publishes it to PyPI, then registers the MCP
+# server in the official MCP registry.
+#
+# One-time setup by the PyPI project owner: on pypi.org, Account settings ->
+# Publishing -> add a pending publisher with project name
+# "fulltext-article-downloader", owner "computron", repository
+# "fulltext-article-downloader", workflow "publish.yml", environment "pypi".
+# No secrets are stored in the repository: PyPI and the MCP registry both
+# accept the workflow's OIDC identity.
+name: Publish
+
+on:
+  push:
+    tags: ["v*"]
+  release:
+    types: [published]
+
+jobs:
+  pypi:
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install build && pip install -e ".[dev,mcp]"
+      - run: python -m pytest tests -q
+      - run: python -m build
+      - uses: pypa/gh-action-pypi-publish@release/v1
+
+  mcp-registry:
+    needs: pypi
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+      - name: Wait for PyPI to serve the new version
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          for i in $(seq 1 30); do
+            curl -sf "https://pypi.org/pypi/fulltext-article-downloader/$VERSION/json" > /dev/null && exit 0
+            sleep 20
+          done
+          echo "PyPI did not expose $VERSION in time" && exit 1
+      - name: Put the released version into server.json
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          jq --arg v "$VERSION" '.version = $v | .packages[0].version = $v' server.json > server.tmp && mv server.tmp server.json
+      - name: Install mcp-publisher
+        run: |
+          curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
+      - run: ./mcp-publisher login github-oidc
+      - run: ./mcp-publisher publish
