@@ -51,6 +51,8 @@ def make_pdf(path, text, pages=1):
     ("PMC6561843", "pmc", "PMC6561843"),
     ("https://pmc.ncbi.nlm.nih.gov/articles/PMC6561843/", "pmc", "PMC6561843"),
     ("fNyXCCZ0g6", "openreview", "fNyXCCZ0g6"),
+    ("https://openreview.net/forum?id=tLaaIkAgod#discussion", "openreview", "tLaaIkAgod"),
+    ("https://openreview.net/pdf?id=RzoWVjzZZF", "openreview", "RzoWVjzZZF"),
 ])
 def test_parse_identifiers(raw, kind, value):
     assert identifiers.parse(raw) == (kind, value)

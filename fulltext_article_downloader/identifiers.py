@@ -11,7 +11,8 @@ _PMC_RE = re.compile(
 # OpenReview ids are short random strings of mixed case ("fNyXCCZ0g6"). Requiring
 # an upper-case letter after the first character keeps ordinary words and
 # directory names ("downloads", "Papers") from being taken for ids.
-_OPENREVIEW_RE = re.compile(r"^(?:https?://openreview\.net/(?:forum|pdf)\?id=)?([A-Za-z0-9_-]{8,20})$")
+# Forum URLs often carry extra query parameters or a "#discussion" fragment.
+_OPENREVIEW_RE = re.compile(r"^(?:https?://openreview\.net/(?:forum|pdf)\?id=)?([A-Za-z0-9_-]{8,20})(?:[&#].*)?$")
 _OPENREVIEW_SHAPE = re.compile(r"^[A-Za-z0-9_-][A-Za-z0-9_-]*[A-Z][A-Za-z0-9_-]*$")
 
 
