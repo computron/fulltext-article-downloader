@@ -39,6 +39,8 @@ Optional extras enable additional routes and the MCP server:
 | `aps` | the APS route that reuses your browser's login cookies (browser-cookie3) |
 | `all` | everything above |
 
+`tls` and `aps` both work by making a request look more like your own browser than a script: `tls` matches Chrome's TLS fingerprint for hosts that turn away plain HTTPS clients, and `aps` reuses the APS session cookie you are already signed in with. Neither opens anything you are not licensed for, but both go a step beyond a plain API client, so they are worth checking against your institution's agreements before you enable them. A default install has neither; `all` includes them.
+
 ```bash
 pip install "fulltext-article-downloader[mcp,tls]"
 ```
@@ -255,6 +257,6 @@ PUBLISHER_TOOL_MAP["Elsevier BV"] = ["elsevier", "unpaywall"]
 
 BSD 3-Clause. See the `LICENSE` file.
 
-Use this tool **only** for content you are legally entitled to access. Respect publisher terms and copyright laws. It does not use Sci-Hub or similar sites and does not try to get around access controls. The authors are **not** responsible for misuse.
+Use this tool **only** for content you are legally entitled to access. Respect publisher terms and copyright laws. It does not use Sci-Hub or any similar site, and retrieves only what your own subscriptions, API keys and open-access licenses already permit; the optional `tls` and `aps` routes present your requests as a browser would, as described under Installation. The authors are **not** responsible for misuse.
 
 Speed-coded by computron on vibes (ChatGPT 4.0) and caffeine; extended by Xu Huang with Claude.
