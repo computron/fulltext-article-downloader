@@ -4,6 +4,8 @@ import types
 import sys
 import importlib
 
+import pytest
+
 import fulltext_article_downloader.tools as tools
 
 
@@ -387,6 +389,7 @@ def test_paperscraper_not_installed(monkeypatch):
 
 
 def test_aps_download(monkeypatch, tmp_path):
+    pytest.importorskip("browser_cookie3")
     dummy_pdf = b"%PDF-1.4 APSPDF"
     # Monkeypatch browser_cookie3.load to return some dummy cookies without error
     monkeypatch.setattr(tools.browser_cookie3, "load",
