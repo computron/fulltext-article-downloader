@@ -26,8 +26,6 @@
 pip install fulltext-article-downloader
 ```
 
-Until the first PyPI release, install from GitHub instead: `pip install git+https://github.com/computron/fulltext-article-downloader.git`.
-
 Optional extras enable additional routes and the MCP server:
 
 | Extra | Adds |
