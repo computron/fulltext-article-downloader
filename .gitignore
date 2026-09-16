@@ -175,3 +175,6 @@ cython_debug/
 
 # default download folder of fulltext-download / fulltext-mcp
 papers/
+
+# output of benchmark/run_regression.py
+regression_out/

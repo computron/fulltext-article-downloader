@@ -222,7 +222,7 @@ What the less obvious tools do:
 * `osti` queries the OSTI API for the DOI and downloads the accepted manuscript that DOE-funded articles receive on osti.gov about a year after publication. It needs no credentials; records still under embargo have no full text and the tool moves on.
 * `semantic` downloads the open-access PDF Semantic Scholar has indexed for the DOI, mostly arXiv and institutional-repository copies of subscription articles.
 * `unpaywall` and `semantic` also accept repository landing pages: when an index lists the page rather than the file (HAL, DSpace, Columbia Academic Commons), the tool reads the `citation_pdf_url` tag the page carries for Google Scholar and downloads that.
-* `chemrxiv` goes through the Cambridge Open Engage API, which works from hosts that chemrxiv.org itself blocks.
+* `chemrxiv` goes through the Cambridge Open Engage API, which works from hosts that chemrxiv.org itself blocks. The API resolves only the DOI of an item's latest version, so a base DOI or an older version is retried with the version suffixes.
 * `biorxiv` asks the bioRxiv API which server (bioRxiv or medRxiv) holds the DOI and which version is current, then fetches that PDF. Requests are paced (the site answers 429 with a 100 s Retry-After after a burst) and the transient 503s it returns are retried; when the API itself is throttling, the unversioned URL, which redirects to the current version, is tried on both servers.
 * `mdpi` builds the article's path on MDPI's CDN (`mdpi-res.com`) from the Crossref record; www.mdpi.com itself refuses requests from cloud-provider address ranges.
 * `zenodo` downloads the PDF attached to a Zenodo record (10.5281 DOIs); a concept DOI resolves to the latest version.
@@ -234,6 +234,12 @@ Downloads send a browser User-Agent, retry with a plain one for repositories tha
 Routes that return preprints or accepted manuscripts (`arxiv`, `chemrxiv`, `biorxiv`, `osti`, `semantic`, repository copies from `unpaywall` and `europepmc`) set `note` in the result. See ``PUBLISHER_TOOL_MAP`` in ``downloader.py``.
 
 > **Tip** – Scraping-based methods (`springerpdf`, `elife`, `cambridge`, etc.) can break if sites change layout or due to access limits; favour official APIs and Unpaywall for large-scale downloads.
+
+### Regression set
+
+`benchmark/` holds 178 identifiers with known outcomes and a runner for checking a release candidate:
+`python benchmark/run_regression.py` prints how many of the `known_good`, `needs_institution` and `expected_fail`
+identifiers downloaded and exits non-zero when a `known_good` one failed. See `benchmark/README.md`.
 
 ### Customising the tool sequence
 
