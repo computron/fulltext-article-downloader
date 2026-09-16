@@ -350,6 +350,48 @@
   "publisher": "ACS"
  },
  {
+  "id": "10.26434/chemrxiv-2025-925jm",
+  "expected": "success",
+  "group": "known_good",
+  "publisher": "ChemRxiv",
+  "route": "chemrxiv"
+ },
+ {
+  "id": "10.26434/chemrxiv-2024-xlpxn",
+  "expected": "success",
+  "group": "known_good",
+  "publisher": "ChemRxiv",
+  "route": "chemrxiv"
+ },
+ {
+  "id": "10.26434/chemrxiv-2024-3mcc5-v2",
+  "expected": "success",
+  "group": "known_good",
+  "publisher": "ChemRxiv",
+  "route": "chemrxiv"
+ },
+ {
+  "id": "10.26434/chemrxiv-2024-b0hd8",
+  "expected": "success",
+  "group": "known_good",
+  "publisher": "ChemRxiv",
+  "route": "chemrxiv"
+ },
+ {
+  "id": "10.26434/chemrxiv-2024-bkmwz",
+  "expected": "success",
+  "group": "known_good",
+  "publisher": "ChemRxiv",
+  "route": "chemrxiv"
+ },
+ {
+  "id": "10.26434/chemrxiv-2024-bxxhh-v2",
+  "expected": "success",
+  "group": "known_good",
+  "publisher": "ChemRxiv",
+  "route": "chemrxiv"
+ },
+ {
   "id": "10.1016/j.nanoen.2019.03.005",
   "expected": "with_institution",
   "group": "needs_institution",
@@ -1071,13 +1113,6 @@
   "reason": "no PDF link from Crossref or Unpaywall"
  },
  {
-  "id": "10.26434/chemrxiv-2025-925jm",
-  "expected": "fail",
-  "group": "expected_fail",
-  "publisher": "ChemRxiv",
-  "reason": "withdrawn preprint"
- },
- {
   "id": "10.1109/tip.2025.3532094",
   "expected": "fail",
   "group": "expected_fail",
@@ -1111,13 +1146,6 @@
   "group": "expected_fail",
   "publisher": "IEEE",
   "reason": "Crossref link points at xplorestaging.ieee.org, which answers 418"
- },
- {
-  "id": "10.26434/chemrxiv-2024-xlpxn",
-  "expected": "fail",
-  "group": "expected_fail",
-  "publisher": "ChemRxiv",
-  "reason": "withdrawn preprint"
  },
  {
   "id": "10.7326/awho202206210",
@@ -1155,25 +1183,11 @@
   "reason": "no PDF link from Crossref or Unpaywall"
  },
  {
-  "id": "10.26434/chemrxiv-2024-3mcc5-v2",
-  "expected": "fail",
-  "group": "expected_fail",
-  "publisher": "ChemRxiv",
-  "reason": "withdrawn preprint"
- },
- {
   "id": "10.1093/qje/qjad052",
   "expected": "fail",
   "group": "expected_fail",
   "publisher": "OUP",
   "reason": "no PDF link from Crossref or Unpaywall"
- },
- {
-  "id": "10.26434/chemrxiv-2024-b0hd8",
-  "expected": "fail",
-  "group": "expected_fail",
-  "publisher": "ChemRxiv",
-  "reason": "withdrawn preprint"
  },
  {
   "id": "10.1109/tcyb.2024.3474714",
@@ -1188,13 +1202,6 @@
   "group": "expected_fail",
   "publisher": "IEEE",
   "reason": "Crossref link points at xplorestaging.ieee.org, which answers 418"
- },
- {
-  "id": "10.26434/chemrxiv-2024-bkmwz",
-  "expected": "fail",
-  "group": "expected_fail",
-  "publisher": "ChemRxiv",
-  "reason": "withdrawn preprint"
  },
  {
   "id": "10.1001/jama.2019.6672",
@@ -1223,13 +1230,6 @@
   "group": "expected_fail",
   "publisher": "IEEE",
   "reason": "only a cover-page stub is served"
- },
- {
-  "id": "10.26434/chemrxiv-2024-bxxhh-v2",
-  "expected": "fail",
-  "group": "expected_fail",
-  "publisher": "ChemRxiv",
-  "reason": "withdrawn preprint"
  },
  {
   "id": "10.1126/science.abd6238",

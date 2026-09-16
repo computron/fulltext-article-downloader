@@ -3,15 +3,15 @@
 178 identifiers in three groups, drawn from a larger benchmark run made from a network without subscriptions. Each
 row carries `id`, `group`, `expected`, `publisher`, and for the two failure groups a `reason`.
 
-- `known_good` (50): download from any network, spread over the package's routes and identifier types. A failure is a regression.
+- `known_good` (56): download from any network, spread over the package's routes and identifier types. A failure is a regression.
 - `needs_institution` (101): closed articles the publisher refused from an unsubscribed address. For Elsevier and Wiley
   the API answers without entitlement (API keys alone do not grant access; entitlement follows the network); for
   Springer Nature the site serves a paywall page; ACS, RSC, AIP, AAAS, IOP, JAMA, NEJM, SAGE, Taylor & Francis and a
   few others answer 403 or an HTML page to a datacenter client even for open articles, so whether a subscribed campus
   address unlocks them is what a campus run tells. Reported, never a failure; after a campus run, move whatever still
   fails there to `expected_fail`.
-- `expected_fail` (27): nothing in the package can reach these: withdrawn preprints, no PDF link from Crossref or
-  Unpaywall, IEEE's staging host, a malformed link, a cover-page stub. A success here is a gain; check the file is
+- `expected_fail` (21): nothing in the package can reach these: no PDF link from Crossref or Unpaywall, IEEE's
+  staging host, a malformed link, a cover-page stub. A success here is a gain; check the file is
   the right article before updating the expectation.
 
     pip install fulltext-article-downloader
