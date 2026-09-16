@@ -55,7 +55,8 @@ def build_server():
         from fastmcp import FastMCP
     except ImportError:
         sys.exit("fastmcp is not installed. Install the MCP extra: pip install 'fulltext-article-downloader[mcp]'")
-    mcp = FastMCP("fulltext-article-downloader")
+    from . import __version__
+    mcp = FastMCP("fulltext-article-downloader", version=__version__)
     mcp.tool(get_paper)
     mcp.tool(get_papers)
     return mcp
