@@ -2,7 +2,11 @@ import os
 import logging
 import sys
 
-__version__ = "0.1.0"
+try:
+    from importlib.metadata import version as _version
+    __version__ = _version("fulltext-article-downloader")
+except Exception:
+    __version__ = "0.0.0"
 
 # Load API keys from configuration file if present
 def _load_api_keys():

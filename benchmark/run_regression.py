@@ -12,7 +12,8 @@ what is expected:
   python run_regression.py [--workers 6] [--out regression_out]
 
 Failed known_good identifiers are tried a second time, sequentially, before being
-reported. Exit code 1 when one still fails. Writes <out>/report.json.
+reported. known_good items whose route needs an API key that is not configured are
+skipped and listed. Exit code 1 when one still fails. Writes <out>/report.json.
 """
 import argparse, collections, json, os, sys, time
 from concurrent.futures import ThreadPoolExecutor
@@ -20,6 +21,12 @@ from concurrent.futures import ThreadPoolExecutor
 from fulltext_article_downloader import fetch
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+KEY_FOR_ROUTE = {"elsevier": "ELSEVIER_API_KEY", "wiley": "WILEY_API_KEY"}
+
+
+def skipped_for_missing_keys(rows):
+    """known_good rows whose route needs an API key that is not configured (env or ~/.fulltext_keys)."""
+    return [r for r in rows if r["group"] == "known_good" and KEY_FOR_ROUTE.get(r.get("route")) and not os.getenv(KEY_FOR_ROUTE[r["route"]])]
 
 
 def main():
@@ -28,6 +35,13 @@ def main():
     ap.add_argument("--out", default="regression_out")
     a = ap.parse_args()
     rows = json.load(open(os.path.join(HERE, "regression_ids.json")))
+    if not os.getenv("UNPAYWALL_EMAIL"):
+        sys.exit("UNPAYWALL_EMAIL is not set (environment or ~/.fulltext_keys); the unpaywall route needs it")
+    skipped = skipped_for_missing_keys(rows)
+    if skipped:
+        print(f"skipping {len(skipped)} known_good items whose key is not configured:",
+              sorted({KEY_FOR_ROUTE[r["route"]] for r in skipped}))
+        rows = [r for r in rows if r not in skipped]
     papers = os.path.join(a.out, "papers"); os.makedirs(papers, exist_ok=True)
     t0 = time.time()
 
@@ -47,7 +61,7 @@ def main():
     regressions = [r for r in by["known_good"] if not r["success"]]
     gains = [r for r in by["expected_fail"] if r["success"]]
     unlocked = [r for r in by["needs_institution"] if r["success"]]
-    report = {"elapsed_s": round(time.time() - t0), "counts": {g: f"{sum(r['success'] for r in rs)}/{len(rs)}" for g, rs in by.items()},
+    report = {"elapsed_s": round(time.time() - t0), "skipped_for_missing_keys": [r["id"] for r in skipped], "counts": {g: f"{sum(r['success'] for r in rs)}/{len(rs)}" for g, rs in by.items()},
               "regressions": [{"id": r["id"], "error": r["error"]} for r in regressions],
               "unlocked_with_institution": [{"id": r["id"], "source": r["source"], "publisher": r["publisher"], "reason": r.get("reason")} for r in unlocked],
               "gains_in_expected_fail": [{"id": r["id"], "source": r["source"]} for r in gains],

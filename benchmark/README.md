@@ -18,6 +18,8 @@ row carries `id`, `group`, `expected`, `publisher`, and for the two failure grou
     export UNPAYWALL_EMAIL=you@example.org        # plus ELSEVIER_API_KEY, WILEY_API_KEY, SPRINGER_API_KEY, SEMANTIC_SCHOLAR_API_KEY if you have them
     python run_regression.py                      # about six minutes; exit code 1 on a regression; report in regression_out/report.json
 
+known_good items that need ELSEVIER_API_KEY or WILEY_API_KEY are skipped, and listed, when that key is not configured.
+
 A failed `known_good` item is tried once more at the end, so a transient outage of one source does not fail the run.
 Per-source pacing (Wiley, bioRxiv, Semantic Scholar) is in-process, so the default six workers stay inside every quota;
 one run makes six Wiley TDM requests (quota about 30 per ten minutes for each key) and three bioRxiv requests. Run one
