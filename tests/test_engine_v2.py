@@ -218,6 +218,30 @@ def test_chemrxiv_uses_open_engage_api(monkeypatch, tmp_path):
     assert r.source == "chemrxiv" and "preprint" in r.note
 
 
+def test_chemrxiv_resolves_an_older_version_to_the_latest(monkeypatch, tmp_path):
+    seen = []
+
+    def dummy_get(url, **kw):
+        if "cambridge.org/engage/coe/public-api" in url:
+            seen.append(url.rsplit("/", 1)[1])
+            if url.endswith(("chemrxiv-2024-bxxhh-v5", "chemrxiv.12762269.v2")):
+                return DummyResponse(status_code=200, json_data={"asset": {"original": {"url": "https://www.cambridge.org/engage/api-gateway/x.pdf"}}})
+            return DummyResponse(status_code=404)
+        if "api-gateway" in url:
+            return DummyResponse(status_code=200, content=PDF)
+        return DummyResponse(status_code=404)
+
+    monkeypatch.setattr(tools.requests, "get", dummy_get)
+    r = tools.download_via_chemrxiv("10.26434/chemrxiv-2024-bxxhh-v2", str(tmp_path / "c.pdf"))
+    assert r.source == "chemrxiv" and "chemrxiv-2024-bxxhh-v5" in r.note
+    assert seen == ["chemrxiv-2024-bxxhh-v2", "chemrxiv-2024-bxxhh-v1", "chemrxiv-2024-bxxhh-v3", "chemrxiv-2024-bxxhh-v4", "chemrxiv-2024-bxxhh-v5"]
+    seen.clear()
+    r = tools.download_via_chemrxiv("10.26434/chemrxiv.12762269", str(tmp_path / "o.pdf"))
+    assert "chemrxiv.12762269.v2" in r.note and seen == ["chemrxiv.12762269", "chemrxiv.12762269.v1", "chemrxiv.12762269.v2"]
+    with pytest.raises(Exception, match="no item"):
+        tools.download_via_chemrxiv("10.26434/chemrxiv-2024-nope", str(tmp_path / "d.pdf"))
+
+
 def test_biorxiv_resolves_server_and_retries_503(monkeypatch, tmp_path):
     calls = []
 
@@ -365,6 +389,29 @@ def test_semantic_searches_by_title_only_with_key(monkeypatch, tmp_path):
     monkeypatch.setenv("SEMANTIC_SCHOLAR_API_KEY", "k")
     r = tools.download_via_semantic("10.1007/x", str(tmp_path / "s.pdf"))
     assert r.source == "semantic" and "preprint" in r.note and "https://arxiv.org/pdf/1.2" in calls
+
+
+def test_semantic_search_rejects_a_hit_with_another_doi(monkeypatch, tmp_path):
+    wanted = "Ranitidine and Risk of N-Nitrosodimethylamine (NDMA) Formation"
+    hits = [{"title": "Temperature-Dependent Formation of N-Nitrosodimethylamine", "externalIds": {"DOI": "10.1248/cpb.c20-00225"},
+             "openAccessPdf": {"url": "https://example.org/other.pdf", "status": "gold"}}]
+
+    def dummy_get(url, **kw):
+        if "/paper/DOI:" in url:
+            return DummyResponse(status_code=200, json_data={"title": wanted, "openAccessPdf": None})
+        if url.endswith("/paper/search"):
+            return DummyResponse(status_code=200, json_data={"data": hits})
+        if url.endswith(".pdf"):
+            return DummyResponse(status_code=200, content=PDF)
+        return DummyResponse(status_code=404)
+
+    monkeypatch.setattr(tools.requests, "get", dummy_get)
+    monkeypatch.setenv("SEMANTIC_SCHOLAR_API_KEY", "k")
+    with pytest.raises(Exception, match="no open-access copy"):
+        tools.download_via_semantic("10.1001/jama.2021.10043", str(tmp_path / "s.pdf"))
+    hits.append({"title": wanted, "externalIds": {"DOI": "10.1001/JAMA.2021.10043"}, "openAccessPdf": {"url": "https://example.org/same.pdf", "status": "green"}})
+    r = tools.download_via_semantic("10.1001/jama.2021.10043", str(tmp_path / "s.pdf"))
+    assert r.source == "semantic"
 
 
 def test_semantic_uses_arxiv_id_when_record_has_no_pdf(monkeypatch, tmp_path):

@@ -927,7 +927,7 @@ def download_via_semantic(doi: str, output_path: str):
     record = r.json()
     copy = _semantic_copy(record)
     if not copy and api_key and record.get("title"):
-        copy = _semantic_search_by_title(record["title"], headers)
+        copy = _semantic_search_by_title(doi, record["title"], headers)
     if not copy:
         raise Exception(f"Semantic Scholar lists no open-access copy for DOI {doi}")
     url, note = copy
@@ -975,8 +975,18 @@ def _semantic_get(url, **kwargs):
     return r
 
 
-def _semantic_search_by_title(title, headers):
+def _same_paper(hit, doi, title):
+    """A search hit is the wanted paper when its DOI matches or, lacking a DOI,
+    when the two titles share nearly all their words in both directions."""
     from . import verify
+    hit_doi = ((hit.get("externalIds") or {}).get("DOI") or "").lower()
+    if hit_doi:
+        return hit_doi == doi.lower()
+    hit_title = hit.get("title") or ""
+    return verify.title_matches(hit_title, title, 0.9) and verify.title_matches(title, hit_title, 0.9)
+
+
+def _semantic_search_by_title(doi, title, headers):
     try:
         r = _semantic_get("https://api.semanticscholar.org/graph/v1/paper/search",
                             params={"query": title, "fields": _SEMANTIC_FIELDS, "limit": 5},
@@ -986,17 +996,12 @@ def _semantic_search_by_title(title, headers):
     if r.status_code != 200:
         return None
     for hit in r.json().get("data") or []:
-        if verify.title_matches(hit.get("title") or "", title) and _semantic_copy(hit):
+        if _same_paper(hit, doi, title) and _semantic_copy(hit):
             return _semantic_copy(hit)
     return None
 
 
-def download_via_chemrxiv(doi: str, output_path: str):
-    """
-    Download a ChemRxiv preprint through the Cambridge Open Engage public API.
-    chemrxiv.org itself sits behind a bot check that blocks many hosts; the
-    API on cambridge.org returns the asset URL, which downloads normally.
-    """
+def _open_engage_item(doi: str):
     api_url = f"https://www.cambridge.org/engage/coe/public-api/v1/items/doi/{doi}"
     try:
         r = _get_with_retry(requests.get, api_url, headers={"User-Agent": BROWSER_USER_AGENT},
@@ -1004,14 +1009,39 @@ def download_via_chemrxiv(doi: str, output_path: str):
     except Exception as e:
         raise Exception(f"Error connecting to the Open Engage API: {e}")
     if r.status_code == 404:
-        raise Exception(f"ChemRxiv has no item for DOI {doi}")
+        return None
     if r.status_code != 200:
         raise Exception(f"Open Engage API request failed (status code {r.status_code})")
-    pdf_url = ((r.json().get("asset") or {}).get("original") or {}).get("url")
+    return r.json()
+
+
+def download_via_chemrxiv(doi: str, output_path: str):
+    """
+    Download a ChemRxiv preprint through the Cambridge Open Engage public API.
+    chemrxiv.org itself sits behind a bot check that blocks many hosts; the
+    API on cambridge.org returns the asset URL, which downloads normally.
+    The API resolves only the DOI of an item's latest version, so a base DOI
+    or an older version is retried as v1, v2, ... until one resolves
+    (suffix "-vN" for current DOIs, ".vN" for the older chemrxiv.NNNNNNNN form).
+    """
+    m = re.search(r"([.-])v\d+$", doi)
+    base = doi[:m.start()] if m else doi
+    sep = m.group(1) if m else ("." if "chemrxiv." in doi else "-")
+    candidates = [doi] + [f"{base}{sep}v{n}" for n in range(1, 10) if f"{base}{sep}v{n}" != doi]
+    for used in candidates:
+        item = _open_engage_item(used)
+        if item is not None:
+            break
+    else:
+        raise Exception(f"ChemRxiv has no item for DOI {doi}")
+    pdf_url = ((item.get("asset") or {}).get("original") or {}).get("url")
     if not pdf_url:
-        raise Exception(f"ChemRxiv item for DOI {doi} has no PDF asset")
+        raise Exception(f"ChemRxiv item for DOI {used} has no PDF asset")
     path = _download_file(pdf_url, output_path, expect_pdf=True)
-    return Fetched(path, source="chemrxiv", note="ChemRxiv preprint, not the publisher's version of record")
+    note = "ChemRxiv preprint, not the publisher's version of record"
+    if used != doi:
+        note += f" (latest version, {used})"
+    return Fetched(path, source="chemrxiv", note=note)
 
 
 def download_via_pmc(pmcid: str, output_path: str):
