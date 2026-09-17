@@ -35,6 +35,33 @@ PLAIN_USER_AGENT = requests.utils.default_user_agent()
 # and a single 2 s pause usually clears them.
 RETRY_STATUS_CODES = (429, 500, 502, 503, 504)
 
+# Some publishers put a commercial bot-management challenge in front of the
+# article PDF. The challenge answers 200 with an HTML page (or redirects to the
+# vendor's validation host), so without this check it looks identical to a
+# landing page whose PDF link we failed to parse. It is not: no User-Agent,
+# TLS fingerprint or link extraction reaches the file, and this package does
+# not try to defeat these systems. Detecting them lets the error say so and
+# stops us retrying a request that cannot succeed.
+_BOT_WALL_MARKERS = (
+    ("Radware Bot Manager", ("perfdrive.com", "bot manager captcha")),
+    ("Cloudflare", ("/cdn-cgi/challenge-platform", "just a moment...",
+                    "attention required! | cloudflare")),
+    ("PerimeterX", ("perimeterx", "px-captcha")),
+    ("Imperva Incapsula", ("_incapsula_", "incapsula incident")),
+)
+
+
+def _bot_wall(sample: bytes, final_url: str = ""):
+    """Name the bot-management service when `sample` (the first bytes of a
+    response that should have been a PDF) or the redirect target is one of
+    their challenge pages, else None."""
+    hay = (final_url or "").lower() + " " + sample[:4096].decode("utf-8", "ignore").lower()
+    for service, markers in _BOT_WALL_MARKERS:
+        if any(m in hay for m in markers):
+            return service
+    return None
+
+
 
 class Fetched(str):
     """Path of a downloaded file. Behaves as a plain str; `note` carries a
@@ -166,9 +193,17 @@ def _fetch_once(get, url, output_path, headers, expect_pdf, **extra):
         raise Exception(f"Error writing to file {output_path}: {e}")
     if expect_pdf:
         with open(output_path, "rb") as fh:
-            magic = fh.read(5)
-        if magic != b"%PDF-":
+            head = fh.read(4096)
+        if head[:5] != b"%PDF-":
             os.remove(output_path)
+            service = _bot_wall(head, getattr(response, "url", "") or "")
+            if service:
+                # Not _Retryable: another User-Agent or TLS fingerprint will
+                # meet the same challenge, and retrying only adds load.
+                # No ";" in the message: the downloader joins attempts with "; ".
+                raise Exception(
+                    f"{url} is behind a {service} bot-protection challenge "
+                    "and is not served to automated clients")
             raise _Retryable(f"{url} returned non-PDF content (expected a PDF)", 200)
     return output_path
 
