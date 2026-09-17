@@ -701,6 +701,63 @@ def test_bulk_download_concurrent_keeps_order_and_errors(monkeypatch, tmp_path):
     assert peak[0] > 1  # downloads actually overlapped
 
 
+def test_bot_wall_detects_known_challenges():
+    assert tools._bot_wall(b"", "https://validate.perfdrive.com/abc?x=1") == "Radware Bot Manager"
+    assert tools._bot_wall(b"<title>Radware Bot Manager Captcha</title>") == "Radware Bot Manager"
+    assert tools._bot_wall(b"<title>Just a moment...</title>") == "Cloudflare"
+    assert tools._bot_wall(b"<div id=px-captcha>") == "PerimeterX"
+    assert tools._bot_wall(b"Incapsula incident ID: 1-2") == "Imperva Incapsula"
+    # An ordinary landing page is not a bot wall.
+    assert tools._bot_wall(b"<html><body>Article landing page</body></html>") is None
+    assert tools._bot_wall(b"%PDF-1.7 ...") is None
+
+
+def test_bot_wall_reported_and_not_retried(tmp_path, monkeypatch):
+    # IOP serves the article PDF URL through Radware Bot Manager: HTTP 200 with
+    # an HTML challenge, redirected to the vendor's validation host. That must
+    # be reported as such, and must not be retried under another User-Agent.
+    calls = []
+
+    def dummy_get(url, headers=None, **kwargs):
+        calls.append(headers.get("User-Agent"))
+        return DummyResponse(
+            status_code=200,
+            content=b"<head><title>Radware Bot Manager Captcha</title></head>",
+            url="https://validate.perfdrive.com/abc?ssa=1")
+
+    monkeypatch.setattr(tools.requests, "get", dummy_get)
+    target = str(tmp_path / "a.pdf")
+    with pytest.raises(Exception) as excinfo:
+        tools._download_file("https://iopscience.iop.org/article/10.1088/x/pdf",
+                             target, expect_pdf=True)
+    message = str(excinfo.value)
+    assert "Radware Bot Manager" in message
+    assert "bot-protection challenge" in message
+    # The delimiter the downloader joins attempts with must not appear, or the
+    # error chain fragments.
+    assert ";" not in message
+    assert len(calls) == 1, f"retried a bot wall {len(calls)} times"
+    assert not os.path.exists(target)
+
+
+def test_non_pdf_without_bot_wall_still_retries(tmp_path, monkeypatch):
+    # The ordinary UA-sniffing case must keep its second attempt.
+    calls = []
+
+    def dummy_get(url, headers=None, **kwargs):
+        calls.append(headers.get("User-Agent"))
+        if len(calls) == 1:
+            return DummyResponse(status_code=200, content=b"<html>viewer</html>")
+        return DummyResponse(status_code=200, content=b"%PDF-1.7 body")
+
+    monkeypatch.setattr(tools.requests, "get", dummy_get)
+    target = str(tmp_path / "b.pdf")
+    assert tools._download_file("https://hal.example/doc", target, expect_pdf=True) == target
+    assert len(calls) == 2
+    assert calls[0] == tools.BROWSER_USER_AGENT
+    assert calls[1] == tools.PLAIN_USER_AGENT
+
+
 if __name__ == "__main__":
     import pytest
     import sys
