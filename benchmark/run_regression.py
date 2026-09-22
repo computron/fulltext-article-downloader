@@ -57,8 +57,10 @@ def signature(error):
     sigs = []
     for m in re.finditer(r"https?://([^/\s]+)\S*\s*(?:\(status code: (\d+)\)|returned non-PDF content)", error):
         sigs.append(f"{m.group(1)} {m.group(2) or 'html'}")
+    for m in re.finditer(r"https?://([^/\s]+)\S* is behind an? (.+?) bot-protection challenge", error):
+        sigs.append(f"{m.group(1)} {m.group(2)} challenge")
     if "abstract-only" in error: sigs.append("elsevier abstract-only")
-    if "redirected to" in error: sigs.append("redirected")
+    if "not followed" in error: sigs.append("redirect refused")
     return sorted(set(sigs)) or ["no publisher link tried"]
 
 
