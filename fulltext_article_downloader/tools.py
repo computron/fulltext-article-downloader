@@ -75,6 +75,18 @@ class Fetched(str):
         return obj
 
 
+_REDIRECT_CODES = (301, 302, 303, 307, 308)
+
+
+def _refuse_redirect(response, what):
+    """A request that carries an API key never follows a redirect: python-requests
+    forwards custom credential headers to the new host, so a hijacked or
+    misconfigured API host would receive the key."""
+    if response.status_code in _REDIRECT_CODES:
+        raise Exception(f"{what} redirected to {response.headers.get('Location', 'an unknown location')}; "
+                        "not followed because the request carries credentials")
+
+
 def _get_with_retry(get, url, **kwargs):
     """Call `get(url, **kwargs)`, retrying once on a connection error or a
     status in RETRY_STATUS_CODES, after the server's Retry-After (capped at
@@ -281,12 +293,14 @@ def download_via_elsevier(doi: str, output_path: str):
     # X-ELS-Status answer into a bare HTTP 400.
     def _request(accept):
         try:
-            return _get_with_retry(
+            r = _get_with_retry(
                 requests.get, url,
                 headers={"X-ELS-APIKey": api_key, "Accept": accept},
-                timeout=REQUEST_TIMEOUT)
+                timeout=REQUEST_TIMEOUT, allow_redirects=False)
         except Exception as e:
             raise Exception(f"Error connecting to Elsevier API: {e}")
+        _refuse_redirect(r, "Elsevier API")
+        return r
 
     # Prefer a fully entitled PDF.
     pdf_response = _request("application/pdf")
@@ -303,6 +317,8 @@ def download_via_elsevier(doi: str, output_path: str):
     response = _request("text/xml")
     if response.status_code == 200:
         content = response.content
+        if b"<full-text-retrieval-response" not in content[:20000]:
+            raise Exception("Elsevier API returned something other than an article record")
         if b"<coredata>" in content and b"<ce:para" not in content and b"<xocs:rawtext" not in content:
             raise Exception("Elsevier returned abstract-only XML (key not entitled to full text)")
         xml_path = base_path + ".xml"
@@ -419,12 +435,26 @@ def download_via_wiley(doi: str, output_path: str):
     url = base_url + quote(doi, safe="")
     headers = {"Wiley-TDM-Client-Token": api_key}
     _wiley_rate_limit()
+    # The API answers 302 to a signed download URL on alm.wiley.com. It is fetched
+    # separately, without the token, so the token never leaves api.wiley.com.
     try:
-        return _download_file(url, output_path, headers=headers, expect_pdf=True)
+        r = _get_with_retry(requests.get, url, headers=headers, timeout=REQUEST_TIMEOUT, allow_redirects=False)
     except Exception as e:
-        # Provide a more specific hint on failure
-        raise Exception(
-            f"Wiley API download failed: {e}. Ensure your API key is correct and you have access rights.")
+        raise Exception(f"Wiley API download failed: {e}")
+    if r.status_code in _REDIRECT_CODES:
+        target = r.headers.get("Location", "")
+        host = urlparse(target).hostname or ""
+        if host != "wiley.com" and not host.endswith(".wiley.com"):
+            raise Exception(f"Wiley API redirected to {target}; not followed")
+        return _download_file(target, output_path, expect_pdf=True)
+    if r.status_code != 200:
+        raise Exception(f"Wiley API download failed: {url} answered {r.status_code}. "
+                        "Ensure your API key is correct and you have access rights.")
+    if r.content[:5] != b"%PDF-":
+        raise Exception("Wiley API returned non-PDF content")
+    with open(output_path, "wb") as f:
+        f.write(r.content)
+    return output_path
 
 
 def download_via_plos(doi: str, output_path: str):
@@ -895,7 +925,18 @@ def download_via_europepmc(doi: str, output_path: str):
         raise Exception(f"Error connecting to Europe PMC: {e}")
     if r.status_code != 200:
         raise Exception(f"Europe PMC request failed (status code {r.status_code})")
-    results = (r.json().get("resultList") or {}).get("result") or []
+    data = r.json()
+    if "resultList" not in data:  # the search API intermittently answers without one
+        time.sleep(2)
+        try:
+            data = _get_with_retry(requests.get, api_url,
+                                   params={"query": f"DOI:{doi}", "format": "json", "resultType": "core"},
+                                   headers={"User-Agent": BROWSER_USER_AGENT}, timeout=REQUEST_TIMEOUT).json()
+        except Exception as e:
+            raise Exception(f"Error connecting to Europe PMC: {e}")
+        if "resultList" not in data:
+            raise Exception("Europe PMC search answered twice without a result list (transient)")
+    results = data["resultList"].get("result") or []
     candidates = []  # (url, note)
     pmc_copy = None  # (pmcid, is_open_access) when the article's full text is in PMC
     for rec in results:
@@ -1003,7 +1044,10 @@ def _semantic_get(url, **kwargs):
             if wait > 0:
                 time.sleep(wait)
             _semantic_last_call[0] = time.time()
-        r = _get_with_retry(requests.get, url, **kwargs)
+        keyed = bool((kwargs.get("headers") or {}).get("x-api-key"))
+        r = _get_with_retry(requests.get, url, allow_redirects=not keyed, **kwargs)
+        if keyed:
+            _refuse_redirect(r, "Semantic Scholar API")
         if r.status_code != 429 or attempt == 3:
             return r
         time.sleep(2 ** (attempt + 1))

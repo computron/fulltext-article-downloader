@@ -65,7 +65,7 @@ class DummySession:
 
 def test_elsevier_api_success(tmp_path, monkeypatch):
     # Setup dummy Elsevier API response
-    sample_xml = b"<full-text>Example</full-text>"
+    sample_xml = b"<full-text-retrieval-response>Example</full-text-retrieval-response>"
 
     def dummy_get(url, headers=None, params=None, **kwargs):
         # Expect correct URL and API key header
@@ -98,7 +98,7 @@ def test_elsevier_prefers_entitled_pdf(tmp_path, monkeypatch):
         if accept == "application/pdf":
             return DummyResponse(status_code=200, content=pdf_bytes,
                                  headers={"X-ELS-Status": "OK"})
-        return DummyResponse(status_code=200, content=b"<full-text/>")
+        return DummyResponse(status_code=200, content=b"<full-text-retrieval-response/>")
 
     monkeypatch.setattr(tools.requests, "get", dummy_get)
     os.environ["ELSEVIER_API_KEY"] = "TESTKEY"
@@ -116,7 +116,7 @@ def test_elsevier_falls_back_when_pdf_not_entitled(tmp_path, monkeypatch):
     # Elsevier returns 200 and a valid but first-page-only PDF when the
     # requestor lacks PDF entitlement; the complete XML must win instead.
     preview = b"%PDF-1.4 first page only"
-    xml_bytes = b"<full-text>complete</full-text>"
+    xml_bytes = b"<full-text-retrieval-response>complete</full-text-retrieval-response>"
     warning = ("WARNING - Response limited to first page because requestor "
                "not entitled to resource")
 
@@ -146,7 +146,7 @@ def test_elsevier_falls_back_when_pdf_route_returns_non_pdf(tmp_path, monkeypatc
             return DummyResponse(status_code=200,
                                  content=b"<html>landing page</html>",
                                  headers={"X-ELS-Status": "OK"})
-        return DummyResponse(status_code=200, content=b"<full-text/>")
+        return DummyResponse(status_code=200, content=b"<full-text-retrieval-response/>")
 
     monkeypatch.setattr(tools.requests, "get", dummy_get)
     os.environ["ELSEVIER_API_KEY"] = "TESTKEY"

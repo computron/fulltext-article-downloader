@@ -205,6 +205,66 @@ def test_semantic_scholar_notes_green_copies(monkeypatch, tmp_path):
     assert r.source == "semantic" and "preprint" in r.note
 
 
+def test_keyed_routes_refuse_redirects(monkeypatch, tmp_path):
+    seen = []
+
+    def dummy_get(url, **kw):
+        seen.append(kw.get("allow_redirects"))
+        return DummyResponse(status_code=302, headers={"Location": "https://evil.example/"})
+
+    monkeypatch.setattr(tools.requests, "get", dummy_get)
+    monkeypatch.setenv("ELSEVIER_API_KEY", "k")
+    monkeypatch.setenv("WILEY_API_KEY", "k")
+    monkeypatch.setenv("SEMANTIC_SCHOLAR_API_KEY", "k")
+    with pytest.raises(Exception, match="redirected to https://evil.example/"):
+        tools.download_via_elsevier("10.1016/j.x.2024.1", str(tmp_path / "e.pdf"))
+    with pytest.raises(Exception, match="redirected to https://evil.example/"):
+        tools.download_via_wiley("10.1002/x.1", str(tmp_path / "w.pdf"))
+    with pytest.raises(Exception, match="redirected to https://evil.example/"):
+        tools.download_via_semantic("10.1002/x.1", str(tmp_path / "s.pdf"))
+    assert seen and all(a is False for a in seen)
+
+
+def test_wiley_follows_its_signed_download_url_without_the_token(monkeypatch, tmp_path):
+    calls = []
+
+    def dummy_get(url, headers=None, **kw):
+        calls.append((url, dict(headers or {})))
+        if url.startswith("https://api.wiley.com/"):
+            return DummyResponse(status_code=302, headers={"Location": "https://alm.wiley.com/alm/api/v2/download/abc"})
+        return DummyResponse(status_code=200, content=PDF)
+
+    monkeypatch.setattr(tools.requests, "get", dummy_get)
+    monkeypatch.setenv("WILEY_API_KEY", "k")
+    path = tools.download_via_wiley("10.1002/x.1", str(tmp_path / "w.pdf"))
+    assert open(path, "rb").read(5) == b"%PDF-"
+    assert "Wiley-TDM-Client-Token" in calls[0][1]
+    assert calls[1][0].startswith("https://alm.wiley.com/") and "Wiley-TDM-Client-Token" not in calls[1][1]
+
+
+def test_europepmc_retries_a_search_answer_without_result_list(monkeypatch, tmp_path):
+    answers = [{"hitCount": 1}, {"resultList": {"result": [{"doi": "10.1021/x", "pmcid": "PMC1", "inEPMC": "Y", "isOpenAccess": "Y"}]}}]
+
+    def dummy_get(url, **kw):
+        if "europepmc/webservices/rest/search" in url:
+            return DummyResponse(status_code=200, json_data=answers.pop(0))
+        if "pdf=render" in url:
+            return DummyResponse(status_code=200, content=PDF)
+        return DummyResponse(status_code=404)
+
+    monkeypatch.setattr(tools.requests, "get", dummy_get)
+    monkeypatch.setattr(tools.time, "sleep", lambda s: None)
+    r = tools.download_via_europepmc("10.1021/x", str(tmp_path / "e.pdf"))
+    assert r and not answers
+
+
+def test_check_xml_rejects_html(tmp_path):
+    p = tmp_path / "x.xml"
+    p.write_bytes(b"<!DOCTYPE html>\n<html><head><title>Not an article</title></head></html>")
+    ok, reason = verify.check_xml(str(p))
+    assert not ok and "XML" in reason
+
+
 def test_chemrxiv_uses_open_engage_api(monkeypatch, tmp_path):
     def dummy_get(url, **kw):
         if "cambridge.org/engage/coe/public-api" in url:

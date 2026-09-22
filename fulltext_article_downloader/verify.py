@@ -71,6 +71,9 @@ def check_xml(path):
     requests with a valid record that has no <ce:para> elements."""
     with open(path, "rb") as f:
         head = f.read(2_000_000)
+    lead = head.lstrip(b"\xef\xbb\xbf \t\r\n")[:32].lower()  # skip whitespace and a UTF-8 BOM
+    if not lead.startswith(b"<") or lead.startswith((b"<!doctype html", b"<html")):
+        return False, "not an XML document"
     if b"<coredata>" in head and b"<ce:para" not in head and b"<xocs:rawtext" not in head:
         return False, "Elsevier XML has no body text (abstract-only entitlement)"
     if b"<article" in head and b"<body" not in head:
