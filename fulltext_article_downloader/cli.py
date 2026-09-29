@@ -12,7 +12,7 @@ import os
 import sys
 
 from . import identifiers
-from .downloader import DEFAULT_TOOLS, TOOL_FUNCTIONS, fetch, fetch_many
+from .downloader import TOOL_FUNCTIONS, fetch, fetch_many
 
 
 def _is_identifier(value: str) -> bool:

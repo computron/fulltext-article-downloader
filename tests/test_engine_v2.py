@@ -205,6 +205,11 @@ def test_semantic_scholar_notes_green_copies(monkeypatch, tmp_path):
     assert r.source == "semantic" and "preprint" in r.note
 
 
+def test_doi_keeps_its_own_brackets():
+    assert identifiers.parse("10.1130/0016-7606(1992)104(0528)") == ("doi", "10.1130/0016-7606(1992)104(0528)")
+    assert identifiers.parse("10.1021/jacs.3c13302).") == ("doi", "10.1021/jacs.3c13302")
+
+
 def test_keyed_routes_refuse_redirects(monkeypatch, tmp_path):
     seen = []
 

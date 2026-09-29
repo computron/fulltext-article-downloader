@@ -379,7 +379,7 @@ def bulk_download_articles(dois: list, output_dir: str, log_file: str = None,
         failed = [d for d, res in results.items() if
                   isinstance(res, str) and res.startswith("ERROR")]
         if failed:
-            print(f"\nThe following DOIs could not be downloaded:")
+            print("\nThe following DOIs could not be downloaded:")
             for d in failed:
                 print(f"  - {d}: {results[d]}")
     return results

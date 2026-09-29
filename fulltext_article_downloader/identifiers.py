@@ -25,7 +25,9 @@ def parse(identifier: str):
     s = (identifier or "").strip()
     m = _DOI_RE.match(s)
     if m:
-        doi = m.group(1).rstrip(".,;)")
+        doi = m.group(1).rstrip(".,;")
+        if doi.count(")") > doi.count("("):  # a closing bracket from the surrounding text
+            doi = doi.rstrip(")").rstrip(".,;")
         am = _ARXIV_DOI_RE.match(doi)
         return ("arxiv", am.group(1)) if am else ("doi", doi)
     m = _ARXIV_RE.match(s)

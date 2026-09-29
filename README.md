@@ -212,7 +212,7 @@ The tool is composed of multiple sub-tools intended to support various publisher
 | Zenodo             | `zenodo` |
 | Others             | `unpaywall` → `europepmc` → `crossref_tdm` → `osti` → `semantic` → `elsevier` |
 
-arXiv, PMC and OpenReview ids go straight to `arxiv`, `pmc` and `openreview`. `pmc` fetches Europe PMC's PDF render and, when that endpoint refuses (it throttles hosts that ask for many articles in a row), the full-text JATS XML from Europe PMC's REST service or from NCBI's efetch, which also serves author manuscripts (`NCBI_API_KEY` is optional and raises NCBI's rate limit).
+arXiv, PMC and OpenReview ids go straight to `arxiv`, `pmc` and `openreview` (OpenReview currently answers automated requests with a challenge; the route then says so). `pmc` fetches Europe PMC's PDF render and, when that endpoint refuses (it throttles hosts that ask for many articles in a row), the full-text JATS XML from Europe PMC's REST service or from NCBI's efetch, which also serves author manuscripts (`NCBI_API_KEY` is optional and raises NCBI's rate limit).
 
 What the less obvious tools do:
 

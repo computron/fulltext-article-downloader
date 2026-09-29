@@ -10,7 +10,7 @@ CLI. FULLTEXT_OUTPUT_DIR sets where files go when a call gives no output_dir
 import os
 import sys
 
-from .downloader import TOOL_FUNCTIONS, fetch, fetch_many
+from .downloader import fetch, fetch_many
 
 
 def _output_dir(output_dir: str) -> str:

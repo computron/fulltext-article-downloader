@@ -1,1282 +1,1382 @@
 [
  {
   "id": "2511.02956",
-  "expected": "success",
   "group": "known_good",
-  "route": "arxiv",
-  "publisher": "arxiv"
+  "expected": "success",
+  "publisher": "arxiv",
+  "route": "arxiv"
  },
  {
   "id": "2005.02117",
-  "expected": "success",
   "group": "known_good",
-  "route": "arxiv",
-  "publisher": "arxiv"
+  "expected": "success",
+  "publisher": "arxiv",
+  "route": "arxiv"
  },
  {
   "id": "2005.02512",
-  "expected": "success",
   "group": "known_good",
-  "route": "arxiv",
-  "publisher": "arxiv"
+  "expected": "success",
+  "publisher": "arxiv",
+  "route": "arxiv"
  },
  {
   "id": "2209.02781",
-  "expected": "success",
   "group": "known_good",
-  "route": "arxiv",
-  "publisher": "arxiv"
+  "expected": "success",
+  "publisher": "arxiv",
+  "route": "arxiv"
  },
  {
   "id": "2603.00541",
-  "expected": "success",
   "group": "known_good",
-  "route": "arxiv",
-  "publisher": "arxiv"
+  "expected": "success",
+  "publisher": "arxiv",
+  "route": "arxiv"
  },
  {
   "id": "cond-mat/9608102",
-  "expected": "success",
   "group": "known_good",
-  "route": "arxiv",
-  "publisher": "arxiv"
+  "expected": "success",
+  "publisher": "arxiv",
+  "route": "arxiv"
  },
  {
   "id": "2511.02561",
-  "expected": "success",
   "group": "known_good",
-  "route": "arxiv",
-  "publisher": "arxiv"
+  "expected": "success",
+  "publisher": "arxiv",
+  "route": "arxiv"
  },
  {
   "id": "2110.04256",
-  "expected": "success",
   "group": "known_good",
-  "route": "arxiv",
-  "publisher": "arxiv"
+  "expected": "success",
+  "publisher": "arxiv",
+  "route": "arxiv"
  },
  {
   "id": "10.26434/chemrxiv-2022-lhm0z",
-  "expected": "success",
   "group": "known_good",
-  "route": "chemrxiv",
-  "publisher": "ChemRxiv"
+  "expected": "success",
+  "publisher": "ChemRxiv",
+  "route": "chemrxiv"
  },
  {
   "id": "10.26434/chemrxiv-2023-52p7p",
-  "expected": "success",
   "group": "known_good",
-  "route": "chemrxiv",
-  "publisher": "ChemRxiv"
+  "expected": "success",
+  "publisher": "ChemRxiv",
+  "route": "chemrxiv"
  },
  {
   "id": "10.26434/chemrxiv-2024-ft4sj",
-  "expected": "success",
   "group": "known_good",
-  "route": "chemrxiv",
-  "publisher": "ChemRxiv"
+  "expected": "success",
+  "publisher": "ChemRxiv",
+  "route": "chemrxiv"
  },
  {
   "id": "10.26434/chemrxiv.13809527.v1",
-  "expected": "success",
   "group": "known_good",
-  "route": "chemrxiv",
-  "publisher": "ChemRxiv"
+  "expected": "success",
+  "publisher": "ChemRxiv",
+  "route": "chemrxiv"
  },
  {
   "id": "10.1101/2024.06.17.599351",
-  "expected": "success",
   "group": "known_good",
-  "route": "biorxiv",
-  "publisher": "other"
+  "expected": "success",
+  "publisher": "other",
+  "route": "biorxiv"
  },
  {
   "id": "10.1101/2024.08.20.608861",
-  "expected": "success",
   "group": "known_good",
-  "route": "biorxiv",
-  "publisher": "other"
+  "expected": "success",
+  "publisher": "other",
+  "route": "biorxiv"
  },
  {
   "id": "10.1101/2024.08.25.607996",
-  "expected": "success",
   "group": "known_good",
-  "route": "biorxiv",
-  "publisher": "other"
+  "expected": "success",
+  "publisher": "other",
+  "route": "biorxiv"
  },
  {
   "id": "10.3390/met15030308",
-  "expected": "success",
   "group": "known_good",
-  "route": "mdpi",
-  "publisher": "other"
+  "expected": "success",
+  "publisher": "other",
+  "route": "mdpi"
  },
  {
   "id": "10.3390/en18030517",
-  "expected": "success",
   "group": "known_good",
-  "route": "mdpi",
-  "publisher": "other"
+  "expected": "success",
+  "publisher": "other",
+  "route": "mdpi"
  },
  {
   "id": "10.1038/s41563-020-0705-9",
-  "expected": "success",
   "group": "known_good",
-  "route": "unpaywall",
-  "publisher": "Springer Nature"
+  "expected": "success",
+  "publisher": "Springer Nature",
+  "route": "unpaywall"
  },
  {
   "id": "10.3960/jslrt.51.67",
-  "expected": "success",
   "group": "known_good",
-  "route": "unpaywall",
-  "publisher": "other"
+  "expected": "success",
+  "publisher": "other",
+  "route": "unpaywall"
  },
  {
   "id": "10.1016/j.cell.2023.10.006",
-  "expected": "success",
   "group": "known_good",
-  "route": "unpaywall",
-  "publisher": "Elsevier"
+  "expected": "success",
+  "publisher": "Elsevier",
+  "route": "unpaywall"
  },
  {
   "id": "10.1016/j.cell.2019.01.024",
-  "expected": "success",
   "group": "known_good",
-  "route": "unpaywall",
-  "publisher": "Elsevier"
+  "expected": "success",
+  "publisher": "Elsevier",
+  "route": "unpaywall"
  },
  {
   "id": "10.1214/20-aos2025",
-  "expected": "success",
   "group": "known_good",
-  "route": "unpaywall",
-  "publisher": "other"
+  "expected": "success",
+  "publisher": "other",
+  "route": "unpaywall"
  },
  {
   "id": "10.1103/physrevx.11.031005",
-  "expected": "success",
   "group": "known_good",
-  "route": "unpaywall",
-  "publisher": "APS"
+  "expected": "success",
+  "publisher": "APS",
+  "route": "unpaywall"
  },
  {
   "id": "10.1016/j.joule.2024.03.005",
-  "expected": "success",
   "group": "known_good",
-  "route": "unpaywall",
-  "publisher": "Elsevier"
+  "expected": "success",
+  "publisher": "Elsevier",
+  "route": "unpaywall"
  },
  {
   "id": "10.1016/j.cell.2021.08.036",
-  "expected": "success",
   "group": "known_good",
-  "route": "unpaywall",
-  "publisher": "Elsevier"
+  "expected": "success",
+  "publisher": "Elsevier",
+  "route": "unpaywall"
  },
  {
   "id": "10.1145/3638048",
-  "expected": "success",
   "group": "known_good",
-  "route": "unpaywall",
-  "publisher": "other"
+  "expected": "success",
+  "publisher": "other",
+  "route": "unpaywall"
  },
  {
   "id": "10.3389/fncir.2012.00001",
-  "expected": "success",
   "group": "known_good",
-  "route": "unpaywall",
-  "publisher": "other"
+  "expected": "success",
+  "publisher": "other",
+  "route": "unpaywall"
  },
  {
   "id": "10.1038/s41467-024-54112-5",
-  "expected": "success",
   "group": "known_good",
-  "route": "springerpdf",
-  "publisher": "Springer Nature"
+  "expected": "success",
+  "publisher": "Springer Nature",
+  "route": "springerpdf"
  },
  {
   "id": "10.1038/s41467-024-50376-z",
-  "expected": "success",
   "group": "known_good",
-  "route": "springerpdf",
-  "publisher": "Springer Nature"
+  "expected": "success",
+  "publisher": "Springer Nature",
+  "route": "springerpdf"
  },
  {
   "id": "10.1038/s41567-023-02377-w",
-  "expected": "success",
   "group": "known_good",
-  "route": "springerpdf",
-  "publisher": "Springer Nature"
+  "expected": "success",
+  "publisher": "Springer Nature",
+  "route": "springerpdf"
  },
  {
   "id": "10.1038/s41467-021-23154-4",
-  "expected": "success",
   "group": "known_good",
-  "route": "springerpdf",
-  "publisher": "Springer Nature"
+  "expected": "success",
+  "publisher": "Springer Nature",
+  "route": "springerpdf"
  },
  {
   "id": "10.1002/advs.202102156",
-  "expected": "success",
   "group": "known_good",
-  "route": "wiley",
-  "publisher": "Wiley"
+  "expected": "success",
+  "publisher": "Wiley",
+  "route": "wiley"
  },
  {
   "id": "10.1002/chem.202303113",
-  "expected": "success",
   "group": "known_good",
-  "route": "wiley",
-  "publisher": "Wiley"
+  "expected": "success",
+  "publisher": "Wiley",
+  "route": "wiley"
  },
  {
   "id": "10.1016/j.diabet.2025.101624",
-  "expected": "success",
   "group": "known_good",
-  "route": "elsevier",
-  "publisher": "Elsevier"
+  "expected": "success",
+  "publisher": "Elsevier",
+  "route": "elsevier"
  },
  {
   "id": "10.1016/j.xcrp.2021.100620",
-  "expected": "success",
   "group": "known_good",
-  "route": "elsevier",
-  "publisher": "Elsevier"
+  "expected": "success",
+  "publisher": "Elsevier",
+  "route": "elsevier"
  },
  {
   "id": "10.1016/j.xcrp.2024.101959",
-  "expected": "success",
   "group": "known_good",
-  "route": "elsevier",
-  "publisher": "Elsevier"
+  "expected": "success",
+  "publisher": "Elsevier",
+  "route": "elsevier"
  },
  {
   "id": "10.12688/openreseurope.21242.1",
-  "expected": "success",
   "group": "known_good",
-  "route": "crossref_tdm",
-  "publisher": "other"
+  "expected": "success",
+  "publisher": "other",
+  "route": "crossref_tdm"
  },
  {
   "id": "10.1103/physrevlett.122.045502",
-  "expected": "success",
   "group": "known_good",
-  "route": "crossref_tdm",
-  "publisher": "APS"
+  "expected": "success",
+  "publisher": "APS",
+  "route": "crossref_tdm"
  },
  {
   "id": "10.1038/s41557-022-00933-0",
-  "expected": "success",
   "group": "known_good",
-  "route": "europepmc",
-  "publisher": "Springer Nature"
+  "expected": "success",
+  "publisher": "Springer Nature",
+  "route": "europepmc"
  },
  {
   "id": "10.1021/acs.chemmater.4c00303",
-  "expected": "success",
   "group": "known_good",
-  "route": "osti",
-  "publisher": "ACS"
+  "expected": "success",
+  "publisher": "ACS",
+  "route": "osti"
  },
  {
   "id": "10.1109/tit.2024.3436923",
-  "expected": "success",
   "group": "known_good",
-  "route": "semantic",
-  "publisher": "IEEE"
+  "expected": "success",
+  "publisher": "IEEE",
+  "route": "semantic"
  },
  {
   "id": "10.1371/journal.pone.0001897",
-  "expected": "success",
   "group": "known_good",
-  "route": "plos",
-  "publisher": "other"
+  "expected": "success",
+  "publisher": "other",
+  "route": "plos"
  },
  {
   "id": "PMC13344488",
-  "expected": "success",
   "group": "known_good",
-  "route": "pmc",
-  "publisher": "pmc"
+  "expected": "success",
+  "publisher": "pmc",
+  "route": "pmc"
  },
  {
   "id": "PMC11846926",
-  "expected": "success",
   "group": "known_good",
-  "route": "pmc",
-  "publisher": "pmc"
+  "expected": "success",
+  "publisher": "pmc",
+  "route": "pmc"
  },
  {
   "id": "PMC12311270",
-  "expected": "success",
   "group": "known_good",
-  "route": "pmc",
-  "publisher": "pmc"
+  "expected": "success",
+  "publisher": "pmc",
+  "route": "pmc"
  },
  {
   "id": "PMC11847190",
-  "expected": "success",
   "group": "known_good",
-  "route": "pmc",
-  "publisher": "pmc"
+  "expected": "success",
+  "publisher": "pmc",
+  "route": "pmc"
  },
  {
   "id": "PMC11814882",
-  "expected": "success",
   "group": "known_good",
-  "route": "pmc",
-  "publisher": "pmc"
+  "expected": "success",
+  "publisher": "pmc",
+  "route": "pmc"
  },
  {
   "id": "10.5281/zenodo.17558243",
-  "expected": "success",
   "group": "known_good",
-  "route": "zenodo",
-  "publisher": "Zenodo"
+  "expected": "success",
+  "publisher": "Zenodo",
+  "route": "zenodo"
  },
  {
   "id": "10.5281/zenodo.8425709",
-  "expected": "success",
   "group": "known_good",
-  "route": "zenodo",
-  "publisher": "Zenodo"
+  "expected": "success",
+  "publisher": "Zenodo",
+  "route": "zenodo"
  },
  {
   "id": "10.1021/acscatal.0c04038",
-  "expected": "success",
   "group": "known_good",
-  "route": "europepmc",
-  "publisher": "ACS"
+  "expected": "success",
+  "publisher": "ACS",
+  "route": "europepmc"
  },
  {
   "id": "10.26434/chemrxiv-2025-925jm",
-  "expected": "success",
   "group": "known_good",
+  "expected": "success",
   "publisher": "ChemRxiv",
   "route": "chemrxiv"
  },
  {
   "id": "10.26434/chemrxiv-2024-xlpxn",
-  "expected": "success",
   "group": "known_good",
+  "expected": "success",
   "publisher": "ChemRxiv",
   "route": "chemrxiv"
  },
  {
   "id": "10.26434/chemrxiv-2024-3mcc5-v2",
-  "expected": "success",
   "group": "known_good",
+  "expected": "success",
   "publisher": "ChemRxiv",
   "route": "chemrxiv"
  },
  {
   "id": "10.26434/chemrxiv-2024-b0hd8",
-  "expected": "success",
   "group": "known_good",
+  "expected": "success",
   "publisher": "ChemRxiv",
   "route": "chemrxiv"
  },
  {
   "id": "10.26434/chemrxiv-2024-bkmwz",
-  "expected": "success",
   "group": "known_good",
+  "expected": "success",
   "publisher": "ChemRxiv",
   "route": "chemrxiv"
  },
  {
   "id": "10.26434/chemrxiv-2024-bxxhh-v2",
-  "expected": "success",
   "group": "known_good",
+  "expected": "success",
   "publisher": "ChemRxiv",
   "route": "chemrxiv"
  },
  {
   "id": "10.1016/j.nanoen.2019.03.005",
-  "expected": "with_institution",
   "group": "needs_institution",
+  "expected": "with_institution",
   "publisher": "Elsevier",
-  "reason": "Elsevier API returns the abstract only without entitlement",
-  "campus_run": "unlocked via elsevier (LBL, 2026-09-17)"
+  "reason": "Elsevier API entitlement",
+  "unlocked": [
+   "2026-09-17",
+   "2026-09-28"
+  ]
  },
  {
   "id": "10.1016/j.jpowsour.2022.231657",
-  "expected": "with_institution",
   "group": "needs_institution",
+  "expected": "with_institution",
   "publisher": "Elsevier",
-  "reason": "Elsevier API returns the abstract only without entitlement",
-  "campus_run": "unlocked via elsevier (LBL, 2026-09-17)"
+  "reason": "Elsevier API entitlement",
+  "unlocked": [
+   "2026-09-17",
+   "2026-09-28"
+  ]
  },
  {
   "id": "10.1016/j.jretconser.2025.104426",
-  "expected": "with_institution",
   "group": "needs_institution",
+  "expected": "with_institution",
   "publisher": "Elsevier",
-  "reason": "Elsevier API returns the abstract only without entitlement",
-  "campus_run": "unlocked via elsevier (LBL, 2026-09-17)"
+  "reason": "Elsevier API entitlement",
+  "unlocked": [
+   "2026-09-17",
+   "2026-09-28"
+  ]
  },
  {
   "id": "10.1016/j.ceramint.2024.04.319",
-  "expected": "with_institution",
   "group": "needs_institution",
+  "expected": "with_institution",
   "publisher": "Elsevier",
-  "reason": "Elsevier API returns the abstract only without entitlement",
-  "campus_run": "unlocked via elsevier (LBL, 2026-09-17)"
+  "reason": "Elsevier API entitlement",
+  "unlocked": [
+   "2026-09-17",
+   "2026-09-28"
+  ]
  },
  {
   "id": "10.1016/j.frl.2025.107932",
-  "expected": "with_institution",
   "group": "needs_institution",
+  "expected": "with_institution",
   "publisher": "Elsevier",
-  "reason": "Elsevier API returns the abstract only without entitlement",
-  "campus_run": "unlocked via elsevier (LBL, 2026-09-17)"
+  "reason": "Elsevier API entitlement",
+  "unlocked": [
+   "2026-09-17",
+   "2026-09-28"
+  ]
  },
  {
   "id": "10.1016/j.jallcom.2023.170710",
-  "expected": "with_institution",
   "group": "needs_institution",
+  "expected": "with_institution",
   "publisher": "Elsevier",
-  "reason": "Elsevier API returns the abstract only without entitlement",
-  "campus_run": "unlocked via elsevier (LBL, 2026-09-17)"
+  "reason": "Elsevier API entitlement",
+  "unlocked": [
+   "2026-09-17",
+   "2026-09-28"
+  ]
  },
  {
   "id": "10.1016/j.electacta.2022.140894",
-  "expected": "with_institution",
   "group": "needs_institution",
+  "expected": "with_institution",
   "publisher": "Elsevier",
-  "reason": "Elsevier API returns the abstract only without entitlement",
-  "campus_run": "unlocked via elsevier (LBL, 2026-09-17)"
+  "reason": "Elsevier API entitlement",
+  "unlocked": [
+   "2026-09-17",
+   "2026-09-28"
+  ]
  },
  {
   "id": "10.1016/j.matpr.2023.08.103",
-  "expected": "with_institution",
   "group": "needs_institution",
+  "expected": "with_institution",
   "publisher": "Elsevier",
-  "reason": "Elsevier API returns the abstract only without entitlement",
-  "campus_run": "unlocked via elsevier (LBL, 2026-09-17)"
+  "reason": "Elsevier API entitlement",
+  "unlocked": [
+   "2026-09-17",
+   "2026-09-28"
+  ]
  },
  {
   "id": "10.1016/j.commatsci.2024.113160",
-  "expected": "with_institution",
   "group": "needs_institution",
+  "expected": "with_institution",
   "publisher": "Elsevier",
-  "reason": "Elsevier API returns the abstract only without entitlement",
-  "campus_run": "unlocked via elsevier (LBL, 2026-09-17)"
+  "reason": "Elsevier API entitlement",
+  "unlocked": [
+   "2026-09-17",
+   "2026-09-28"
+  ]
  },
  {
   "id": "10.1016/j.jallcom.2023.170810",
-  "expected": "with_institution",
   "group": "needs_institution",
+  "expected": "with_institution",
   "publisher": "Elsevier",
-  "reason": "Elsevier API returns the abstract only without entitlement",
-  "campus_run": "unlocked via elsevier (LBL, 2026-09-17)"
+  "reason": "Elsevier API entitlement",
+  "unlocked": [
+   "2026-09-17",
+   "2026-09-28"
+  ]
  },
  {
   "id": "10.1016/j.matpr.2020.12.407",
-  "expected": "with_institution",
   "group": "needs_institution",
+  "expected": "with_institution",
   "publisher": "Elsevier",
-  "reason": "Elsevier API returns the abstract only without entitlement",
-  "campus_run": "unlocked via elsevier (LBL, 2026-09-17)"
+  "reason": "Elsevier API entitlement",
+  "unlocked": [
+   "2026-09-17",
+   "2026-09-28"
+  ]
  },
  {
   "id": "10.1016/j.actamat.2022.118640",
-  "expected": "with_institution",
   "group": "needs_institution",
+  "expected": "with_institution",
   "publisher": "Elsevier",
-  "reason": "Elsevier API returns the abstract only without entitlement",
-  "campus_run": "unlocked via elsevier (LBL, 2026-09-17)"
+  "reason": "Elsevier API entitlement",
+  "unlocked": [
+   "2026-09-17",
+   "2026-09-28"
+  ]
  },
  {
   "id": "10.1016/j.commatsci.2024.112781",
-  "expected": "with_institution",
   "group": "needs_institution",
+  "expected": "with_institution",
   "publisher": "Elsevier",
-  "reason": "Elsevier API returns the abstract only without entitlement",
-  "campus_run": "unlocked via elsevier (LBL, 2026-09-17)"
+  "reason": "Elsevier API entitlement",
+  "unlocked": [
+   "2026-09-17",
+   "2026-09-28"
+  ]
  },
  {
   "id": "10.1016/j.chemosphere.2011.03.001",
-  "expected": "with_institution",
   "group": "needs_institution",
+  "expected": "with_institution",
   "publisher": "Elsevier",
-  "reason": "Elsevier API returns the abstract only without entitlement",
-  "campus_run": "unlocked via elsevier (LBL, 2026-09-17)"
+  "reason": "Elsevier API entitlement",
+  "unlocked": [
+   "2026-09-17",
+   "2026-09-28"
+  ]
  },
  {
   "id": "10.1002/adfm.202111784",
-  "expected": "with_institution",
   "group": "needs_institution",
+  "expected": "with_institution",
   "publisher": "Wiley",
-  "reason": "Wiley TDM answers 403 without entitlement",
-  "campus_run": "unlocked via wiley (LBL, 2026-09-17)"
+  "reason": "Wiley TDM entitlement",
+  "unlocked": [
+   "2026-09-17",
+   "2026-09-28"
+  ]
  },
  {
   "id": "10.1111/ajps.12851",
-  "expected": "with_institution",
   "group": "needs_institution",
+  "expected": "with_institution",
   "publisher": "Wiley",
-  "reason": "Wiley TDM answers 403 without entitlement",
-  "campus_run": "unlocked via wiley (LBL, 2026-09-17)"
+  "reason": "Wiley TDM entitlement",
+  "unlocked": [
+   "2026-09-17",
+   "2026-09-28"
+  ]
  },
  {
   "id": "10.1002/adma.202402391",
-  "expected": "with_institution",
   "group": "needs_institution",
+  "expected": "with_institution",
   "publisher": "Wiley",
-  "reason": "Wiley TDM answers 403 without entitlement",
-  "campus_run": "unlocked via wiley (LBL, 2026-09-17)"
+  "reason": "Wiley TDM entitlement",
+  "unlocked": [
+   "2026-09-17",
+   "2026-09-28"
+  ]
  },
  {
   "id": "10.1002/anie.201902838",
-  "expected": "with_institution",
   "group": "needs_institution",
+  "expected": "with_institution",
   "publisher": "Wiley",
-  "reason": "Wiley TDM answers 403 without entitlement",
-  "campus_run": "unlocked via wiley (LBL, 2026-09-17)"
+  "reason": "Wiley TDM entitlement",
+  "unlocked": [
+   "2026-09-17",
+   "2026-09-28"
+  ]
  },
  {
   "id": "10.1038/s41580-022-00458-x",
-  "expected": "with_institution",
   "group": "needs_institution",
+  "expected": "with_institution",
   "publisher": "Springer Nature",
-  "reason": "publisher site serves a paywall page",
-  "campus_run": "unlocked via springerpdf (LBL, 2026-09-17)"
+  "reason": "subscription",
+  "unlocked": [
+   "2026-09-17",
+   "2026-09-28"
+  ]
  },
  {
   "id": "10.1038/d41586-019-00479-1",
-  "expected": "with_institution",
   "group": "needs_institution",
+  "expected": "with_institution",
   "publisher": "Springer Nature",
-  "reason": "publisher site serves a paywall page",
-  "campus_run": "unlocked via springerpdf (LBL, 2026-09-17)"
+  "reason": "subscription",
+  "unlocked": [
+   "2026-09-17",
+   "2026-09-28"
+  ]
  },
  {
   "id": "10.1038/s41563-023-01793-w",
-  "expected": "with_institution",
   "group": "needs_institution",
+  "expected": "with_institution",
   "publisher": "Springer Nature",
-  "reason": "publisher site serves a paywall page",
-  "campus_run": "unlocked via springerpdf (LBL, 2026-09-17)"
+  "reason": "subscription",
+  "unlocked": [
+   "2026-09-17",
+   "2026-09-28"
+  ]
  },
  {
   "id": "10.1038/s41557-022-01075-z",
-  "expected": "with_institution",
   "group": "needs_institution",
+  "expected": "with_institution",
   "publisher": "Springer Nature",
-  "reason": "publisher site serves a paywall page",
-  "campus_run": "unlocked via springerpdf (LBL, 2026-09-17)"
+  "reason": "subscription",
+  "unlocked": [
+   "2026-09-17",
+   "2026-09-28"
+  ]
  },
  {
   "id": "10.1007/s00027-006-0852-3",
-  "expected": "with_institution",
   "group": "needs_institution",
+  "expected": "with_institution",
   "publisher": "Springer Nature",
-  "reason": "publisher site serves a paywall page",
-  "campus_run": "unlocked via springerpdf (LBL, 2026-09-17)"
+  "reason": "subscription",
+  "unlocked": [
+   "2026-09-17",
+   "2026-09-28"
+  ]
  },
  {
   "id": "10.1038/s41587-024-02417-7",
-  "expected": "with_institution",
   "group": "needs_institution",
+  "expected": "with_institution",
   "publisher": "Springer Nature",
-  "reason": "publisher site serves a paywall page",
-  "campus_run": "unlocked via springerpdf (LBL, 2026-09-17)"
+  "reason": "subscription",
+  "unlocked": [
+   "2026-09-17",
+   "2026-09-28"
+  ]
  },
  {
   "id": "10.1016/j.nanoen.2022.107378",
-  "expected": "with_institution",
   "group": "needs_institution",
+  "expected": "with_institution",
   "publisher": "Elsevier",
-  "reason": "Elsevier API returns the abstract only without entitlement",
-  "campus_run": "unlocked via elsevier (LBL, 2026-09-17)"
+  "reason": "Elsevier API entitlement",
+  "unlocked": [
+   "2026-09-17",
+   "2026-09-28"
+  ]
  },
  {
   "id": "10.1016/j.apcata.2009.05.028",
-  "expected": "with_institution",
   "group": "needs_institution",
+  "expected": "with_institution",
   "publisher": "Elsevier",
-  "reason": "Elsevier API returns the abstract only without entitlement",
-  "campus_run": "unlocked via elsevier (LBL, 2026-09-17)"
+  "reason": "Elsevier API entitlement",
+  "unlocked": [
+   "2026-09-17",
+   "2026-09-28"
+  ]
  },
  {
   "id": "10.1038/s41929-024-01277-3",
-  "expected": "with_institution",
   "group": "needs_institution",
+  "expected": "with_institution",
   "publisher": "Springer Nature",
-  "reason": "publisher site serves a paywall page",
-  "campus_run": "unlocked via springerpdf (LBL, 2026-09-17)"
+  "reason": "subscription",
+  "unlocked": [
+   "2026-09-17",
+   "2026-09-28"
+  ]
  },
  {
   "id": "10.1016/j.ensm.2019.12.012",
-  "expected": "with_institution",
   "group": "needs_institution",
+  "expected": "with_institution",
   "publisher": "Elsevier",
-  "reason": "Elsevier API returns the abstract only without entitlement",
-  "campus_run": "unlocked via elsevier (LBL, 2026-09-17)"
+  "reason": "Elsevier API entitlement",
+  "unlocked": [
+   "2026-09-17",
+   "2026-09-28"
+  ]
  },
  {
   "id": "10.1038/s41578-023-00612-7",
-  "expected": "with_institution",
   "group": "needs_institution",
+  "expected": "with_institution",
   "publisher": "Springer Nature",
-  "reason": "publisher site serves a paywall page",
-  "campus_run": "unlocked via springerpdf (LBL, 2026-09-17)"
+  "reason": "subscription",
+  "unlocked": [
+   "2026-09-17",
+   "2026-09-28"
+  ]
  },
  {
   "id": "10.1007/s42250-025-01347-4",
-  "expected": "with_institution",
   "group": "needs_institution",
+  "expected": "with_institution",
   "publisher": "Springer Nature",
-  "reason": "publisher site serves a paywall page",
-  "campus_run": "unlocked via springerpdf (LBL, 2026-09-17)"
+  "reason": "subscription",
+  "unlocked": [
+   "2026-09-17"
+  ]
  },
  {
   "id": "10.3758/bf03193479",
-  "expected": "with_institution",
   "group": "needs_institution",
+  "expected": "with_institution",
   "publisher": "Springer (Psychonomic)",
-  "reason": "publisher site serves a paywall page",
-  "campus_run": "unlocked via springerpdf (LBL, 2026-09-17)"
+  "reason": "subscription",
+  "unlocked": [
+   "2026-09-17",
+   "2026-09-28"
+  ]
  },
  {
   "id": "10.1086/724802",
-  "expected": "with_institution",
   "group": "needs_institution",
+  "expected": "with_institution",
   "publisher": "University of Chicago Press",
-  "reason": "publisher site answers 403 or an HTML page to an unsubscribed address",
-  "campus_run": "unlocked via crossref_tdm (LBL, 2026-09-17)"
+  "reason": "subscription",
+  "unlocked": [
+   "2026-09-17"
+  ]
  },
  {
   "id": "10.1353/ajm.2023.0003",
-  "expected": "with_institution",
   "group": "needs_institution",
+  "expected": "with_institution",
   "publisher": "Project MUSE",
-  "reason": "Project MUSE serves the PDF to a subscribed address",
-  "campus_run": "unlocked via unpaywall (LBL, 2026-09-17)"
+  "reason": "subscription",
+  "unlocked": [
+   "2026-09-17",
+   "2026-09-28"
+  ]
  },
  {
   "id": "10.1353/ajm.2023.0006",
-  "expected": "with_institution",
   "group": "needs_institution",
+  "expected": "with_institution",
   "publisher": "Project MUSE",
-  "reason": "Project MUSE serves the PDF to a subscribed address",
-  "campus_run": "unlocked via unpaywall (LBL, 2026-09-17)"
+  "reason": "subscription",
+  "unlocked": [
+   "2026-09-17",
+   "2026-09-28"
+  ]
  },
  {
   "id": "10.1021/acsnano.4c06714",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "ACS",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1021/jacs.9b13549",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "ACS",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1021/acsnano.1c08120",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "ACS",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1021/acs.inorgchem.0c02426",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "ACS",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1021/acs.inorgchem.4c00592",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "ACS",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1021/acsenergylett.1c01753",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "ACS",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1021/acsami.0c06873",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "ACS",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1021/ol400065j",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "ACS",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1021/jacs.9b08835",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "ACS",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1021/acsnano.2c00448",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "ACS",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1021/acs.jpcc.0c03061",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "ACS",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1021/acsenergylett.4c00198",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "ACS",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1039/c8nr09653h",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "RSC",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1039/d4dt01727g",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "RSC",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1039/d0cp05909a",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "RSC",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1039/d3mh00594a",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "RSC",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1039/d3nr03077f",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "RSC",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1039/d3ee01447a",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "RSC",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1039/d0cp05567k",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "RSC",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1039/d0cc06185a",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "RSC",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1039/d3cc00019b",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "RSC",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1039/d0ee01860k",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "RSC",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1039/c8nr10507c",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "RSC",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1039/d1ta05751k",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "RSC",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1038/d41586-020-02751-1",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "Springer Nature",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site serves a paywall page"
+  "reason": "no PDF link"
  },
  {
   "id": "10.1063/5.0098085",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "AIP",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1063/1.1896986",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "AIP",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1063/5.0174238",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "AIP",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1063/5.0093115",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "AIP",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1063/5.0195583",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "AIP",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1149/1945-7111/abeaf1",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "IOP (ECS)",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Radware challenge"
  },
  {
   "id": "10.1149/1945-7111/ad8d7d",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "IOP (ECS)",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Radware challenge"
  },
  {
   "id": "10.1126/science.ado4166",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "AAAS",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1126/science.adp3271",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "AAAS",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1021/acsami.4c04852",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "ACS",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1021/acs.nanolett.2c03838",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "ACS",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1039/d1cc04327g",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "RSC",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1063/5.0036605",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "AIP",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1063/5.0149871",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "AIP",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1021/acs.est.3c10758",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "ACS",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1021/acs.est.9b05621",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "ACS",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1021/ct0501957",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "ACS",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1039/d4ta06980c",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "RSC",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1039/d4gc06348a",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "RSC",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1039/d2ta00561a",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "RSC",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1080/01419870.2025.2519807",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "Taylor & Francis",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1001/jamainternmed.2022.2211",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "JAMA Network",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1056/nejme2024212",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "NEJM",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.7326/annals-25-00431",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "American College of Physicians",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1001/jamainternmed.2022.2205",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "JAMA Network",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1001/jamainternmed.2019.5161",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "JAMA Network",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.7326/m18-3227",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "American College of Physicians",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1080/01621459.2020.1837138",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "Taylor & Francis",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1177/00031224241231985",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "SAGE",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.3167/th.2025.7218301",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "Berghahn",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1001/jama.2023.0262",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "JAMA Network",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1001/jama.2020.22717",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "JAMA Network",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1056/nejmc1913971",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "NEJM",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1177/1474474010363844",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "SAGE",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1093/qje/qjae011",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "OUP",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1183/09031936.00147706",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "ERS",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "PDF link answers 404"
  },
  {
   "id": "10.1056/nejmp2307507",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "NEJM",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1001/jama.2021.10043",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "JAMA Network",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1177/00031224241245706",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "SAGE",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1086/724571",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "University of Chicago Press",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1149/1945-7111/acced3",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "IOP (ECS)",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Radware challenge"
  },
  {
   "id": "10.1126/science.373.6555.607",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "AAAS",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Cloudflare challenge"
  },
  {
   "id": "10.1088/1748-9326/ac8496",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "IOP",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Radware challenge"
  },
  {
   "id": "10.1149/1945-7111/ad9992",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "IOP (ECS)",
-  "reason": "failed from a subscribed campus address too (LBL, 2026-09-17); publisher site answers 403 or an HTML page to an unsubscribed address"
+  "reason": "Radware challenge"
  },
  {
   "id": "10.1213/01.ane.0000156207.73396.8e",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "Wolters Kluwer",
-  "reason": "no PDF link from Crossref or Unpaywall"
+  "reason": "PDF link serves an HTML page"
  },
  {
   "id": "10.1109/tip.2025.3532094",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "IEEE",
-  "reason": "Crossref link points at xplorestaging.ieee.org, which answers 418"
+  "reason": "IEEE staging host answers 418"
  },
  {
   "id": "10.7326/a22-0009",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "American College of Physicians",
-  "reason": "no PDF link from Crossref or Unpaywall"
+  "reason": "no PDF link"
  },
  {
   "id": "10.1093/restud/rdz057",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "OUP",
-  "reason": "no PDF link from Crossref or Unpaywall"
+  "reason": "no PDF link"
  },
  {
   "id": "10.1093/qje/qjad005",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "OUP",
-  "reason": "no PDF link from Crossref or Unpaywall"
+  "reason": "no PDF link"
  },
  {
   "id": "10.1109/tcyb.2023.3319647",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "IEEE",
-  "reason": "Crossref link points at xplorestaging.ieee.org, which answers 418"
+  "reason": "IEEE staging host answers 418"
  },
  {
   "id": "10.7326/awho202206210",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "American College of Physicians",
-  "reason": "no PDF link from Crossref or Unpaywall"
+  "reason": "no PDF link"
  },
  {
   "id": "10.1109/mm.2014.10",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "IEEE",
-  "reason": "Crossref link points at xplorestaging.ieee.org, which answers 418"
+  "reason": "IEEE staging host answers 418"
  },
  {
   "id": "10.1109/tcyb.2022.3194099",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "IEEE",
-  "reason": "Crossref link points at xplorestaging.ieee.org, which answers 418"
+  "reason": "IEEE staging host answers 418"
  },
  {
   "id": "10.1093/ser/mwm005",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "OUP",
-  "reason": "no PDF link from Crossref or Unpaywall"
+  "reason": "no PDF link"
  },
  {
   "id": "10.1093/restud/rdaa066",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "OUP",
-  "reason": "no PDF link from Crossref or Unpaywall"
+  "reason": "no PDF link"
  },
  {
   "id": "10.1093/qje/qjad052",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "OUP",
-  "reason": "no PDF link from Crossref or Unpaywall"
+  "reason": "no PDF link"
  },
  {
   "id": "10.1109/tcyb.2024.3474714",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "IEEE",
-  "reason": "Crossref link points at xplorestaging.ieee.org, which answers 418"
+  "reason": "IEEE staging host answers 418"
  },
  {
   "id": "10.1109/tap.2009.2026595",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "IEEE",
-  "reason": "Crossref link points at xplorestaging.ieee.org, which answers 418"
+  "reason": "IEEE staging host answers 418"
  },
  {
   "id": "10.1001/jama.2019.6672",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "JAMA Network",
-  "reason": "Crossref link is malformed"
+  "reason": "malformed Crossref link"
  },
  {
   "id": "10.1109/tit.2020.2981524",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "IEEE",
-  "reason": "Crossref link points at xplorestaging.ieee.org, which answers 418"
+  "reason": "IEEE staging host answers 418"
  },
  {
   "id": "10.1109/jproc.2020.2966560",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "IEEE",
-  "reason": "only a cover-page stub is served"
+  "reason": "cover page only"
  },
  {
   "id": "10.1126/science.abd6238",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "AAAS",
-  "reason": "no PDF link from Crossref or Unpaywall"
+  "reason": "no PDF link"
  },
  {
   "id": "10.1126/science.abg1208",
-  "expected": "fail",
   "group": "expected_fail",
+  "expected": "fail",
   "publisher": "AAAS",
-  "reason": "no PDF link from Crossref or Unpaywall"
+  "reason": "Cloudflare challenge"
  }
 ]

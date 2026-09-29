@@ -701,6 +701,37 @@ def test_bulk_download_concurrent_keeps_order_and_errors(monkeypatch, tmp_path):
     assert peak[0] > 1  # downloads actually overlapped
 
 
+def test_cloudflare_challenge_on_403_is_reported_without_retries(monkeypatch, tmp_path):
+    calls = []
+
+    def dummy_get(url, **kwargs):
+        calls.append(url)
+        return DummyResponse(status_code=403, content=b"<html>forbidden</html>", headers={"cf-mitigated": "challenge"})
+
+    monkeypatch.setattr(tools.requests, "get", dummy_get)
+    with pytest.raises(Exception, match="Cloudflare bot-protection challenge"):
+        tools._download_file("https://pubs.example.org/doi/pdf/10.1/x", str(tmp_path / "a.pdf"), expect_pdf=True)
+    assert len(calls) == 1
+
+
+def test_aws_waf_challenge_is_reported(monkeypatch, tmp_path):
+    monkeypatch.setattr(tools.requests, "get",
+                        lambda url, **kw: DummyResponse(status_code=202, headers={"x-amzn-waf-action": "challenge"}))
+    with pytest.raises(Exception, match="AWS WAF bot-protection challenge"):
+        tools._download_file("https://journals.example.org/a.pdf", str(tmp_path / "a.pdf"), expect_pdf=True)
+
+
+def test_openreview_reports_the_challenge(monkeypatch, tmp_path):
+    def dummy_get(url, **kwargs):
+        if "api2.openreview.net" in url:
+            return DummyResponse(status_code=403, json_data={"name": "ChallengeRequiredError"})
+        return DummyResponse(status_code=403, content=b"<title>Error 403 | OpenReview</title>")
+
+    monkeypatch.setattr(tools.requests, "get", dummy_get)
+    with pytest.raises(Exception, match="challenge verification"):
+        tools.download_via_openreview("rhgIgTSSxW", str(tmp_path / "o.pdf"))
+
+
 def test_bot_wall_detects_known_challenges():
     assert tools._bot_wall(b"", "https://validate.perfdrive.com/abc?x=1") == "Radware Bot Manager"
     assert tools._bot_wall(b"<title>Radware Bot Manager Captcha</title>") == "Radware Bot Manager"

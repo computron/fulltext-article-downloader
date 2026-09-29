@@ -63,6 +63,20 @@ def _bot_wall(sample: bytes, final_url: str = ""):
 
 
 
+def _bot_wall_response(response):
+    """Name the bot-management service behind a refused response, else None.
+    Cloudflare marks the responses it challenges with a cf-mitigated header."""
+    if (response.headers.get("cf-mitigated") or "").lower() == "challenge":
+        return "Cloudflare"
+    if (response.headers.get("x-amzn-waf-action") or "").lower() in ("challenge", "captcha"):
+        return "AWS WAF"
+    try:
+        sample = response.content[:4096]
+    except Exception:
+        sample = b""
+    return _bot_wall(sample, getattr(response, "url", "") or "")
+
+
 class Fetched(str):
     """Path of a downloaded file. Behaves as a plain str; `note` carries a
     caveat when the file is not the publisher's version of record (preprint,
@@ -187,6 +201,11 @@ def _fetch_once(get, url, output_path, headers, expect_pdf, **extra):
     except Exception as e:
         raise Exception(f"Request error for {url}: {e}")
     if response.status_code != 200:
+        service = _bot_wall_response(response)
+        if service:  # a retry cannot pass a challenge
+            raise Exception(
+                f"{url} is behind a {service} bot-protection challenge "
+                "and is not served to automated clients")
         msg = f"Failed to download {url} (status code: {response.status_code})"
         if response.status_code in (403, 406):
             raise _Retryable(msg, response.status_code)
@@ -462,9 +481,7 @@ def download_via_plos(doi: str, output_path: str):
     Download the full-text PDF of a PLOS article using the PLOS article file API.
     """
     base_url = "https://journals.plos.org/plosone/article/file"
-    params = {"id": doi, "type": "printable"}
     try:
-        # Using requests directly since _download_file doesn't accept params, build URL manually
         pdf_url = f"{base_url}?id={doi}&type=printable"
         return _download_file(pdf_url, output_path, headers=None,
                               expect_pdf=True)
@@ -895,7 +912,10 @@ def download_via_osti(doi: str, output_path: str):
         raise Exception(f"Error connecting to OSTI API: {e}")
     if r.status_code != 200:
         raise Exception(f"OSTI API request failed (status code {r.status_code})")
-    records = r.json()
+    try:
+        records = r.json()
+    except ValueError:
+        raise Exception("OSTI API answered with something other than JSON")
     if not records:
         raise Exception(f"No OSTI record for DOI {doi}")
     record = records[0]
@@ -1159,6 +1179,17 @@ def download_via_pmc(pmcid: str, output_path: str):
 def download_via_openreview(review_id: str, output_path: str):
     """Download a submission PDF from OpenReview by its id."""
     headers = {"Referer": f"https://openreview.net/forum?id={review_id}"}
-    path = _download_file(f"https://openreview.net/pdf?id={review_id}", output_path,
-                          headers=headers, expect_pdf=True)
+    try:
+        path = _download_file(f"https://openreview.net/pdf?id={review_id}", output_path,
+                              headers=headers, expect_pdf=True)
+    except Exception as e:
+        # OpenReview says why only through its API
+        try:
+            reason = requests.get("https://api2.openreview.net/notes", params={"id": review_id},
+                                  headers={"User-Agent": BROWSER_USER_AGENT}, timeout=REQUEST_TIMEOUT).json().get("name")
+        except Exception:
+            reason = None
+        if reason == "ChallengeRequiredError":
+            raise Exception("OpenReview asks for a challenge verification and does not serve automated clients")
+        raise e
     return Fetched(path, source="openreview", note="OpenReview submission, not a journal version of record")

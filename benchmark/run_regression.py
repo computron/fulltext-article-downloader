@@ -1,21 +1,15 @@
-"""Pre-release regression check for fulltext-article-downloader.
+"""Regression check for fulltext-article-downloader.
 
-Runs the identifiers in regression_ids.json (three groups) and compares the outcome with
-what is expected:
+Runs the identifiers in regression_ids.json and compares each outcome with its group:
 
-  known_good         must download from any network; a failure here is a regression
-  needs_institution  closed articles a subscribed campus network unlocks (confirmed from
-                     LBL, 2026-09-17); reported, never a failure
-  expected_fail      nothing in the package can reach these, from a campus address either;
-                     a success here is a gain and the expectation should be updated
+  known_good         must download; a failure is a regression
+  needs_institution  closed articles a subscribed network unlocks; reported only
+  expected_fail      not reachable; a success is a gain
 
-  python run_regression.py [--workers 6] [--out regression_out] [--label "LBL, wired"]
+  python run_regression.py [--workers 6] [--out regression_out] [--label "network"]
 
-Before the run the Elsevier key is checked on one closed article; an invalid or
-unreachable key skips the known_good items that depend on it instead of failing them.
-Failed known_good identifiers are tried a second time, sequentially, before being
-reported. Exit code 1 when one still fails. Writes <out>/report.json with a provenance
-block, per-identifier outcomes (full error text) and a failure-signature summary.
+Exit code 1 when a known_good identifier fails for a reason other than a
+bot-protection challenge. Writes <out>/report.json.
 """
 import argparse, collections, datetime, json, os, re, subprocess, sys, time
 from concurrent.futures import ThreadPoolExecutor
@@ -24,7 +18,7 @@ from fulltext_article_downloader import fetch
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 KEY_FOR_ROUTE = {"elsevier": "ELSEVIER_API_KEY", "wiley": "WILEY_API_KEY"}
-ELSEVIER_PROBE = "10.1016/j.nanoen.2019.03.005"  # closed; a valid key gets an abstract-only answer off campus
+ELSEVIER_PROBE = "10.1016/j.nanoen.2019.03.005"  # a closed article
 
 
 def provenance(label):
@@ -93,14 +87,16 @@ def main():
 
     with ThreadPoolExecutor(max_workers=a.workers) as pool:
         results = list(pool.map(one, rows))
-    # a second, sequential try for failed known_good items so a transient outage is not reported as a regression
+    # retry failed known_good items once
     for i, r in enumerate(results):
         if r["group"] == "known_good" and not r["success"]:
             time.sleep(30); results[i] = {**one(rows[i]), "retried": True}
     by = collections.defaultdict(list)
     for r in results:
         by[r["group"]].append(r)
-    regressions = [r for r in by["known_good"] if not r["success"]]
+    failed = [r for r in by["known_good"] if not r["success"]]
+    blocked = [r for r in failed if "bot-protection challenge" in r["error"]]  # the site's doing, not ours
+    regressions = [r for r in failed if r not in blocked]
     gains = [r for r in by["expected_fail"] if r["success"]]
     unlocked = [r for r in by["needs_institution"] if r["success"]]
     signatures = collections.defaultdict(lambda: collections.defaultdict(collections.Counter))
@@ -112,6 +108,7 @@ def main():
               "skipped_for_missing_keys": [r["id"] for r in skipped], "keys_not_accepted": unusable,
               "counts": {g: f"{sum(r['success'] for r in rs)}/{len(rs)}" for g, rs in by.items()},
               "regressions": [{"id": r["id"], "error": r["error"]} for r in regressions],
+              "blocked_by_bot_protection": [r["id"] for r in blocked],
               "unlocked_with_institution": [{"id": r["id"], "source": r["source"], "publisher": r["publisher"], "reason": r.get("reason")} for r in unlocked],
               "gains_in_expected_fail": [{"id": r["id"], "source": r["source"]} for r in gains],
               "failure_signatures": {g: {p: dict(c) for p, c in ps.items()} for g, ps in signatures.items()},
@@ -126,6 +123,8 @@ def main():
     for g in ("needs_institution", "expected_fail"):
         for pub, c in sorted(signatures[g].items()):
             print(f"  {g} {pub}: " + ", ".join(f"{s} x{n}" for s, n in c.most_common(3)))
+    if blocked:
+        print("known_good items behind a bot-protection challenge today:", [r["id"] for r in blocked])
     if regressions:
         print("REGRESSIONS:", [r["id"] for r in regressions]); sys.exit(1)
     print("no regressions")

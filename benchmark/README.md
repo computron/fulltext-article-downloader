@@ -1,32 +1,24 @@
 # Regression set
 
-178 identifiers in three groups. They come from a larger benchmark run made from a network without subscriptions,
-and the two failure groups were then sorted by a run from a subscribed campus network (LBL, 2026-09-17). Each row
-carries `id`, `group`, `expected`, `publisher`, a `reason` for the two failure groups, and `campus_run` where the
-campus run unlocked it.
+178 identifiers with known outcomes, in three groups:
 
-- `known_good` (56): download from any network, spread over the package's routes and identifier types. `route` records
-  which route produced the file in the original run; any route counts. A failure is a regression.
-- `needs_institution` (34): closed articles that fail from an unsubscribed address and that the campus run unlocked:
-  Elsevier (API entitlement follows the network; the key alone does not grant access), Wiley (same), Springer Nature
-  and Project MUSE (the site serves the PDF to a subscribed address), one University of Chicago Press item. Reported,
-  never a failure.
-- `expected_fail` (88): nothing in the package reaches these, from the campus address either. ACS, RSC, AIP, AAAS,
-  IOP, JAMA, NEJM, SAGE, Taylor & Francis and a few others refuse a scripted client whatever the address; the rest
-  have no PDF link from Crossref or Unpaywall, sit behind IEEE's staging host, or are a malformed link or a
-  cover-page stub. A success here is a gain; check the file is the right article before updating the expectation.
+- `known_good` (56): download from any network. A failure is a regression.
+- `needs_institution` (34): closed articles that a subscribed network unlocks. Reported, never a failure.
+  `unlocked` lists the campus runs in which the item downloaded.
+- `expected_fail` (88): the package does not reach these from any network tested; `reason` says why
+  (a bot-protection challenge, no PDF link, and so on). A success is a gain: check the file, then update the row.
 
-    pip install fulltext-article-downloader
-    export UNPAYWALL_EMAIL=you@example.org        # plus ELSEVIER_API_KEY, WILEY_API_KEY, SPRINGER_API_KEY, SEMANTIC_SCHOLAR_API_KEY if you have them
-    python run_regression.py --label "where you ran it"   # about six minutes; exit code 1 on a regression; report in regression_out/report.json
+```
+pip install fulltext-article-downloader
+python run_regression.py --label "where you ran it"
+```
 
-Before the run the Elsevier key is tried on one closed article; a key that is missing, rejected or unreachable skips
-the known_good items that depend on it (and the Wiley ones when that key is missing), and the report says so.
-A failed `known_good` item is tried once more at the end, so a transient outage of one source does not fail the run.
-`report.json` carries a provenance block (package version, commit, date, label, which keys were configured), the full
-error text of every failed identifier, and `failure_signatures`: per group and publisher, which host answered what.
+Keys are read from the environment or `~/.fulltext_keys`. `UNPAYWALL_EMAIL` is required. Items that need an
+Elsevier or Wiley key are skipped when the key is missing or rejected. A run takes about six minutes, exits 1 on a
+regression, and writes `regression_out/report.json`.
 
-Per-source pacing (Wiley, bioRxiv, Semantic Scholar) is in-process, so the default six workers stay inside every quota;
-one run makes six Wiley TDM requests (quota about 30 per ten minutes for each key) and three bioRxiv requests. Run one
-instance at a time; several runs within an hour from the same address can make bioRxiv answer 429 for a while.
-OpenReview is not in the set because openreview.net refuses cloud-provider addresses; test it by hand from a laptop.
+Counts vary by a few items between runs, because what publisher sites serve to automated clients and what an
+institution subscribes to both change over time. A `known_good` item that a site declines to serve is listed, not
+counted as a regression.
+
+Run one instance at a time. Several runs within an hour from the same address can make bioRxiv answer 429.
